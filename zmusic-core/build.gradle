@@ -7,6 +7,6 @@ java {
 }
 
 dependencies {
-    compileOnly 'org.lwjgl:lwjgl-openal:3.3.6'
+    compileOnly 'org.lwjgl:lwjgl-openal:3.4.0'
     compileOnly 'org.apache.logging.log4j:log4j-api:2.25.3'
 }
