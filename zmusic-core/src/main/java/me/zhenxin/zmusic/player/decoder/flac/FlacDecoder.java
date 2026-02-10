@@ -144,18 +144,40 @@ public final class FlacDecoder implements AutoCloseable, IDecoder {
     public BuffPack decodeFrame() throws Exception {
         int blockSamples = readAudioBlock(samples, 0);
         int sampleBytesLen = 0;
-        for (int i = 0; i < blockSamples; i++) {
-            for (int ch = 0; ch < streamInfo.numChannels; ch++) {
-                int val = samples[ch][i];
-                if (streamInfo.sampleDepth == 24) {
-                    float temp = val / 16777216f;
-                    val = (int) (temp * 0x7FFF);
-                } else if (streamInfo.sampleDepth == 32) {
-                    float temp = val / 1099511627776f;
-                    val = (int) (temp * 0x7FFF);
+        int depth = streamInfo.sampleDepth;
+        int numCh = streamInfo.numChannels;
+
+        // 按声道优先处理，改善 CPU 缓存命中率
+        for (int ch = 0; ch < numCh; ch++) {
+            int[] channelSamples = samples[ch];
+            for (int i = 0; i < blockSamples; i++) {
+                int val = channelSamples[i];
+
+                // 使用整数运算替换浮点运算，提升性能
+                if (depth == 16) {
+                    // 16 位：直接使用
+                } else if (depth == 24) {
+                    // 24 位：右移 8 位到 16 位 (除以 2^8)
+                    val = val >> 8;
+                } else if (depth == 20) {
+                    // 20 位：右移 4 位到 16 位
+                    val = val >> 4;
+                } else if (depth == 32) {
+                    // 32 位：右移 16 位到 16 位
+                    val = val >> 16;
+                } else {
+                    // 其他位深度：使用整数运算
+                    int shift = depth - 16;
+                    if (shift > 0) {
+                        val = val >> shift;
+                    } else {
+                        val = val << (-shift);
+                    }
                 }
-                for (int j = 0; j < 2; j++, sampleBytesLen++)
-                    sampleBytes[sampleBytesLen] = (byte) (val >>> (j << 3));
+
+                // 小端序存储
+                sampleBytes[sampleBytesLen++] = (byte) val;
+                sampleBytes[sampleBytesLen++] = (byte) (val >>> 8);
             }
         }
         pack.len = sampleBytesLen;
