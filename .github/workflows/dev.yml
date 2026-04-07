@@ -17,9 +17,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
           java-version: |
@@ -27,91 +27,94 @@ jobs:
             16
             17
             21
-          cache: 'gradle'
       - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/dev' }}
+      - name: Prepare Gradle Wrapper
         run: chmod +x gradlew
       - name: Build with Gradle
         run: ./gradlew clean build --no-daemon
       # Fabric 1.21.8
       - name: Upload Artifact (Fabric 1.21.8)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Fabric 1.21.8'
           path: |
             zmusic-fabric/zmusic-fabric-1.21.8/build/libs/**.jar
       # Fabric 1.21
       - name: Upload Artifact (Fabric 1.21)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Fabric 1.21'
           path: |
             zmusic-fabric/zmusic-fabric-1.21/build/libs/**.jar
       # Fabric 1.20.5
       - name: Upload Artifact (Fabric 1.20.5)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Fabric 1.20.5'
           path: |
             zmusic-fabric/zmusic-fabric-1.20.5/build/libs/**.jar
       # Fabric 1.20
       - name: Upload Artifact (Fabric 1.20)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Fabric 1.20'
           path: |
             zmusic-fabric/zmusic-fabric-1.20/build/libs/**.jar
       # Fabric 1.19.4
       - name: Upload Artifact (Fabric 1.19.4)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Fabric 1.19.4'
           path: |
             zmusic-fabric/zmusic-fabric-1.19.4/build/libs/**.jar
       # Fabric 1.19.3
       - name: Upload Artifact (Fabric 1.19.3)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Fabric 1.19.3'
           path: |
             zmusic-fabric/zmusic-fabric-1.19.3/build/libs/**.jar
       # Fabric 1.19.2
       - name: Upload Artifact (Fabric 1.19.2)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Fabric 1.19.2'
           path: |
             zmusic-fabric/zmusic-fabric-1.19.2/build/libs/**.jar
       # Fabric 1.18.2
       - name: Upload Artifact (Fabric 1.18.2)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Fabric 1.18.2'
           path: |
             zmusic-fabric/zmusic-fabric-1.18.2/build/libs/**.jar
       # Fabric 1.17.1
       - name: Upload Artifact (Fabric 1.17.1)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Fabric 1.17.1'
           path: |
             zmusic-fabric/zmusic-fabric-1.17.1/build/libs/**.jar
       # Fabric 1.16.5
       - name: Upload Artifact (Fabric 1.16.5)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Fabric 1.16.5'
           path: |
             zmusic-fabric/zmusic-fabric-1.16.5/build/libs/**.jar
       # Fabric 1.15.2
       - name: Upload Artifact (Fabric 1.15.2)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Fabric 1.15.2'
           path: |
             zmusic-fabric/zmusic-fabric-1.15.2/build/libs/**.jar
       # Fabric 1.14.4
       - name: Upload Artifact (Fabric 1.14.4)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Fabric 1.14.4'
           path: |
@@ -119,70 +122,70 @@ jobs:
 
       # Forge 1.20
       - name: Upload Artifact (Forge 1.20)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Forge 1.20'
           path: |
             zmusic-forge/zmusic-forge-1.20/build/libs/**.jar
       # Forge 1.19.4
       - name: Upload Artifact (Forge 1.19.4)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Forge 1.19.4'
           path: |
             zmusic-forge/zmusic-forge-1.19.4/build/libs/**.jar
       # Forge 1.19.3
       - name: Upload Artifact (Forge 1.19.3)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Forge 1.19.3'
           path: |
             zmusic-forge/zmusic-forge-1.19.3/build/libs/**.jar
       # Forge 1.19.2
       - name: Upload Artifact (Forge 1.19.2)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Forge 1.19.2'
           path: |
             zmusic-forge/zmusic-forge-1.19.2/build/libs/**.jar
       # Forge 1.18.2
       - name: Upload Artifact (Forge 1.18.2)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Forge 1.18.2'
           path: |
             zmusic-forge/zmusic-forge-1.18.2/build/libs/**.jar
       # Forge 1.17.1
       - name: Upload Artifact (Forge 1.17.1)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Forge 1.17.1'
           path: |
             zmusic-forge/zmusic-forge-1.17.1/build/libs/**.jar
       # Forge 1.16.5
       - name: Upload Artifact (Forge 1.16.5)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Forge 1.16.5'
           path: |
             zmusic-forge/zmusic-forge-1.16.5/build/libs/**.jar
       # Forge 1.15.2
       - name: Upload Artifact (Forge 1.15.2)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Forge 1.15.2'
           path: |
             zmusic-forge/zmusic-forge-1.15.2/build/libs/**.jar
       # Forge 1.14.4
       - name: Upload Artifact (Forge 1.14.4)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Forge 1.14.4'
           path: |
             zmusic-forge/zmusic-forge-1.14.4/build/libs/**.jar
       # Forge 1.12.2
       - name: Upload Artifact (Forge 1.12.2)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: 'ZMusic Forge 1.12.2'
           path: |
