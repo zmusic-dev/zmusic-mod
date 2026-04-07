@@ -18,31 +18,40 @@ import java.net.URL;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings({"AlibabaClassMustHaveAuthor", "AlibabaClassNamingShouldBeCamel", "AlibabaAvoidManuallyCreateThread", "AlibabaUndefineMagicConstant", "HttpUrlsUsage", "AlibabaLowerCamelCaseVariableNaming", "NullableProblems"})
 @Log4j2
 public class MusicPlayer extends InputStream {
+    private static final int MAX_DECODED_BUFFERS = 16;
+    private static final int MAX_OPENAL_BUFFERS = 8;
+    private static final int MAX_BUFFERS_PER_TICK = 4;
 
     private HttpURLConnection connection;
-    private String url;
+    private volatile String url;
     private InputStream content;
 
-    private boolean isClose = false;
-    private boolean reload = false;
+    private volatile boolean isClose = false;
+    private volatile boolean reload = false;
     private IDecoder decoder;
     private final Queue<String> urls = new ConcurrentLinkedQueue<>();
-    private int time = 0;
-    private long local = 0;
+    private volatile int time = 0;
+    private volatile long local = 0;
     private final Semaphore semaphore = new Semaphore(0);
     private final Semaphore semaphore1 = new Semaphore(0);
-    private final Queue<ByteBuffer> queue = new ConcurrentLinkedQueue<>();
-    private boolean isPlay = false;
-    private boolean wait = false;
-    private int index;
-    private int frequency;
-    private int channels;
+    private final BlockingQueue<ByteBuffer> queue = new LinkedBlockingQueue<>(MAX_DECODED_BUFFERS);
+    private volatile boolean isPlay = false;
+    private volatile boolean wait = false;
+    private volatile int index;
+    private volatile int frequency;
+    private volatile int channels;
 
     public MusicPlayer() {
         try {
@@ -158,7 +167,6 @@ public class MusicPlayer extends InputStream {
                     }
                 }
 
-                isPlay = true;
                 index = AL10.alGenSources();
                 int m_numqueued = AL10.alGetSourcei(index, AL10.AL_BUFFERS_QUEUED);
                 while (m_numqueued > 0) {
@@ -177,6 +185,7 @@ public class MusicPlayer extends InputStream {
                 queue.clear();
                 reload = false;
                 isClose = false;
+                isPlay = true;
                 while (true) {
                     try {
                         if (isClose) {
@@ -189,7 +198,9 @@ public class MusicPlayer extends InputStream {
                         ByteBuffer byteBuffer = BufferUtils.createByteBuffer(
                                 output.len).put(output.buff, 0, output.len);
                         ((Buffer) byteBuffer).flip();
-                        queue.add(byteBuffer);
+                        if (!offerDecodedBuffer(byteBuffer)) {
+                            break;
+                        }
                     } catch (Exception e) {
                         if (!isClose) {
                             e.printStackTrace();
@@ -242,10 +253,15 @@ public class MusicPlayer extends InputStream {
             queue.clear();
             return;
         }
-        while (!queue.isEmpty()) {
+        if (!isPlay) {
+            return;
+        }
+        int queued = recycleProcessedBuffers();
+        int submitted = 0;
+        while (queued < MAX_OPENAL_BUFFERS && submitted < MAX_BUFFERS_PER_TICK) {
             ByteBuffer byteBuffer = queue.poll();
             if (byteBuffer == null) {
-                continue;
+                break;
             }
             if (isClose) {
                 return;
@@ -258,10 +274,12 @@ public class MusicPlayer extends InputStream {
             AL10.alSourcef(index, AL10.AL_GAIN, ZMusic.getSoundManager().volume());
 
             AL10.alSourceQueueBuffers(index, intBuffer);
-            if (AL10.alGetSourcei(index,
-                    AL10.AL_SOURCE_STATE) != AL10.AL_PLAYING) {
-                AL10.alSourcePlay(index);
-            }
+            queued++;
+            submitted++;
+        }
+        if (queued > 0 && AL10.alGetSourcei(index,
+                AL10.AL_SOURCE_STATE) != AL10.AL_PLAYING) {
+            AL10.alSourcePlay(index);
         }
     }
 
@@ -339,5 +357,26 @@ public class MusicPlayer extends InputStream {
             reload = true;
             isClose = true;
         }
+    }
+
+    private boolean offerDecodedBuffer(ByteBuffer byteBuffer) throws InterruptedException {
+        while (!isClose) {
+            if (queue.offer(byteBuffer, 100, TimeUnit.MILLISECONDS)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int recycleProcessedBuffers() {
+        int queued = AL10.alGetSourcei(index, AL10.AL_BUFFERS_QUEUED);
+        int processed = AL10.alGetSourcei(index, AL10.AL_BUFFERS_PROCESSED);
+        while (processed > 0) {
+            int temp = AL10.alSourceUnqueueBuffers(index);
+            AL10.alDeleteBuffers(temp);
+            processed--;
+            queued--;
+        }
+        return Math.max(queued, 0);
     }
 }
