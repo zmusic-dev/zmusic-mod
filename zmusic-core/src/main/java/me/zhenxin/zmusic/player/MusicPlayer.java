@@ -32,7 +32,8 @@ import java.util.concurrent.TimeUnit;
 public class MusicPlayer extends InputStream {
     private static final int MAX_DECODED_BUFFERS = 16;
     private static final int MAX_OPENAL_BUFFERS = 8;
-    private static final int MAX_BUFFERS_PER_TICK = 4;
+    // 至少预缓冲半个 OpenAL 队列再开播，降低刚启动时的断粮概率。
+    private static final int MIN_START_OPENAL_BUFFERS = Math.max(1, (MAX_OPENAL_BUFFERS + 1) / 2);
 
     private HttpURLConnection connection;
     private volatile String url;
@@ -49,6 +50,7 @@ public class MusicPlayer extends InputStream {
     private final BlockingQueue<ByteBuffer> queue = new LinkedBlockingQueue<>(MAX_DECODED_BUFFERS);
     private volatile boolean isPlay = false;
     private volatile boolean wait = false;
+    private volatile boolean decodeCompleted = false;
     private volatile int index;
     private volatile int frequency;
     private volatile int channels;
@@ -185,6 +187,7 @@ public class MusicPlayer extends InputStream {
                 queue.clear();
                 reload = false;
                 isClose = false;
+                decodeCompleted = false;
                 isPlay = true;
                 while (true) {
                     try {
@@ -208,6 +211,7 @@ public class MusicPlayer extends InputStream {
                         break;
                     }
                 }
+                decodeCompleted = true;
                 streamClose();
                 decodeClose();
                 while (!isClose && AL10.alGetSourcei(index,
@@ -257,8 +261,7 @@ public class MusicPlayer extends InputStream {
             return;
         }
         int queued = recycleProcessedBuffers();
-        int submitted = 0;
-        while (queued < MAX_OPENAL_BUFFERS && submitted < MAX_BUFFERS_PER_TICK) {
+        while (queued < MAX_OPENAL_BUFFERS) {
             ByteBuffer byteBuffer = queue.poll();
             if (byteBuffer == null) {
                 break;
@@ -275,9 +278,8 @@ public class MusicPlayer extends InputStream {
 
             AL10.alSourceQueueBuffers(index, intBuffer);
             queued++;
-            submitted++;
         }
-        if (queued > 0 && AL10.alGetSourcei(index,
+        if (queued > 0 && shouldStartPlayback(queued) && AL10.alGetSourcei(index,
                 AL10.AL_SOURCE_STATE) != AL10.AL_PLAYING) {
             AL10.alSourcePlay(index);
         }
@@ -378,5 +380,9 @@ public class MusicPlayer extends InputStream {
             queued--;
         }
         return Math.max(queued, 0);
+    }
+
+    private boolean shouldStartPlayback(int queued) {
+        return queued >= MIN_START_OPENAL_BUFFERS || decodeCompleted;
     }
 }
