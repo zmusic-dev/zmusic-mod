@@ -8,6 +8,10 @@ pluginManagement {
             name = 'Forge'
             url = 'https://maven.minecraftforge.net/'
         }
+        maven {
+            name = 'NeoForge'
+            url = 'https://maven.neoforged.net/releases/'
+        }
         mavenCentral()
         gradlePluginPortal()
     }
@@ -44,4 +48,10 @@ include(
         "zmusic-forge:zmusic-forge-1.15.2",
         "zmusic-forge:zmusic-forge-1.14.4",
         "zmusic-forge:zmusic-forge-1.12.2"
+)
+
+include(
+        "zmusic-neoforge",
+        "zmusic-neoforge:zmusic-neoforge-1.20.4",
+        "zmusic-neoforge:zmusic-neoforge-1.21.1"
 )

@@ -33,15 +33,16 @@ subprojects {
     apply plugin: 'java-library'
 
     group = "me.zhenxin"
-    version = "3.5.0"
+    version = "3.6.0"
 
     dependencies {
-        compileOnly("org.projectlombok:lombok:1.18.38")
-        annotationProcessor("org.projectlombok:lombok:1.18.38")
+        compileOnly("org.projectlombok:lombok:1.18.46")
+        annotationProcessor("org.projectlombok:lombok:1.18.46")
     }
 
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
         from {
             //noinspection GroovyMissingReturnStatement
             configurations.runtimeClasspath.collect {
@@ -55,7 +56,7 @@ subprojects {
 
         from("${rootDir}/LICENSE")
 
-        if (project.name.contains("zmusic-forge-1")) {
+        if (project.name.contains("zmusic-forge-1") || project.name.contains("zmusic-neoforge-1")) {
             manifest {
                 attributes([
                         "Specification-Title"     : "zmusic",
@@ -78,6 +79,10 @@ subprojects {
         }
 
         filesMatching("META-INF/mods.toml") {
+            expand "version": project.version
+        }
+
+        filesMatching("META-INF/neoforge.mods.toml") {
             expand "version": project.version
         }
 
