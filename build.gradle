@@ -42,6 +42,8 @@ subprojects {
 
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        destinationDirectory = file("/mnt/d/zmusic-dist")
+
         from {
             //noinspection GroovyMissingReturnStatement
             configurations.runtimeClasspath.collect {
@@ -55,7 +57,7 @@ subprojects {
 
         from("${rootDir}/LICENSE")
 
-        if (project.name.contains("zmusic-forge-1")) {
+        if (project.name.contains("zmusic-forge-1") || project.name.contains("zmusic-neoforge-1")) {
             manifest {
                 attributes([
                         "Specification-Title"     : "zmusic",
