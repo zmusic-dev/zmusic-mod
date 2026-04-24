@@ -1,0 +1,25 @@
+plugins {
+    id 'net.fabricmc.fabric-loom-remap' version '1.15.3'
+}
+
+description = 'Fabric 1.21.8 adapter for ZMusic.'
+
+base {
+    archivesName = 'zmusic-fabric-1.21.8'
+}
+
+dependencies {
+    minecraft 'com.mojang:minecraft:1.21.8'
+    mappings 'net.fabricmc:yarn:1.21.8+build.1:v2'
+    modImplementation 'net.fabricmc:fabric-loader:0.18.4'
+    modImplementation 'net.fabricmc.fabric-api:fabric-api:0.136.1+1.21.8'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 21
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}

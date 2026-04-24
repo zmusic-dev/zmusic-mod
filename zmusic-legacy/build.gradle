@@ -1,0 +1,60 @@
+plugins {
+    id 'base'
+}
+
+def sharedProps = new Properties()
+file('../zmusic.properties').withInputStream { sharedProps.load(it) }
+
+def projectVersion = sharedProps.getProperty('modVersion')
+def projectGroup = sharedProps.getProperty('modGroup')
+
+allprojects {
+    group = projectGroup
+    version = projectVersion
+
+    repositories {
+        maven {
+            name = 'Forge'
+            url = 'https://maven.minecraftforge.net/'
+            metadataSources {
+                mavenPom()
+                artifact()
+            }
+        }
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java-library'
+
+    dependencies {
+        implementation "me.zhenxin:zmusic-shared:${rootProject.version}"
+    }
+
+    def modId = sharedProps.getProperty('modId')
+    def modName = sharedProps.getProperty('modName')
+    def modAuthor = sharedProps.getProperty('modAuthor')
+    def modDescription = sharedProps.getProperty('modDescription')
+    def modHomepageUrl = sharedProps.getProperty('modHomepageUrl')
+
+    tasks.named('processResources', ProcessResources) {
+        inputs.property 'modVersion', project.version
+
+        filesMatching('mcmod.info') {
+            expand(
+                    modId         : modId,
+                    modName       : modName,
+                    modAuthor     : modAuthor,
+                    modDescription: modDescription,
+                    modHomepageUrl: modHomepageUrl,
+                    modVersion    : project.version
+            )
+        }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+    }
+}

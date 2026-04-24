@@ -1,0 +1,21 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+        maven {
+            name = 'GTNH Maven'
+            url = uri('https://nexus.gtnewhorizons.com/repository/public/')
+        }
+    }
+}
+
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+rootProject.name = "zmusic-legacy"
+
+include(
+        "zmusic-forge-1.7.10",
+        "zmusic-forge-1.12.2",
+)

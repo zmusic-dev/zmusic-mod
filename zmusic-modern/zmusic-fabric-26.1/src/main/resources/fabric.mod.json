@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "${modId}",
+  "version": "${modVersion}",
+  "name": "${modName}",
+  "description": "${modDescription}",
+  "authors": ["${modAuthor}"],
+  "contact": {
+    "homepage": "${modHomepageUrl}",
+    "sources": "${modSourcesUrl}",
+    "issues": "${modIssueUrl}"
+  },
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "me.zhenxin.zmusic.loader.fabric.v261.ZMusicFabric261Client"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.4",
+    "minecraft": "~26.1",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}

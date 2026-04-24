@@ -1,0 +1,28 @@
+plugins {
+    id 'net.neoforged.moddev' version '2.0.141'
+}
+
+description = 'NeoForge 1.21.1 adapter for ZMusic.'
+
+base {
+    archivesName = 'zmusic-neoforge-1.21.1'
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+neoForge {
+    version = '21.1.221'
+
+    parchment {
+        minecraftVersion = '1.21.1'
+        mappingsVersion = '2024.11.17'
+    }
+
+    mods {
+        zmusic {
+            sourceSet(sourceSets.main)
+        }
+    }
+}

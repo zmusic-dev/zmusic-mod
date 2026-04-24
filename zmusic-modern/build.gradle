@@ -1,0 +1,78 @@
+plugins {
+    id 'base'
+}
+
+def sharedProps = new Properties()
+file('../zmusic.properties').withInputStream { sharedProps.load(it) }
+
+def projectVersion = sharedProps.getProperty('modVersion')
+def projectGroup = sharedProps.getProperty('modGroup')
+
+allprojects {
+    group = projectGroup
+    version = projectVersion
+
+    repositories {
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+        maven {
+            name = 'NeoForge'
+            url = 'https://maven.neoforged.net/releases/'
+        }
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java-library'
+
+    dependencies {
+        implementation "me.zhenxin:zmusic-shared:${rootProject.version}"
+    }
+
+    def modId = sharedProps.getProperty('modId')
+    def modName = sharedProps.getProperty('modName')
+    def modAuthor = sharedProps.getProperty('modAuthor')
+    def modDescription = sharedProps.getProperty('modDescription')
+    def modLicense = sharedProps.getProperty('modLicense')
+    def modHomepageUrl = sharedProps.getProperty('modHomepageUrl')
+    def modSourcesUrl = sharedProps.getProperty('modSourcesUrl')
+    def modIssueUrl = sharedProps.getProperty('modIssueUrl')
+
+    tasks.named('processResources', ProcessResources) {
+        inputs.property 'modVersion', project.version
+
+        filesMatching('fabric.mod.json') {
+            expand(
+                    modId         : modId,
+                    modName       : modName,
+                    modAuthor     : modAuthor,
+                    modDescription: modDescription,
+                    modHomepageUrl: modHomepageUrl,
+                    modSourcesUrl : modSourcesUrl,
+                    modIssueUrl   : modIssueUrl,
+                    modVersion    : project.version
+            )
+        }
+
+        filesMatching('META-INF/neoforge.mods.toml') {
+            expand(
+                    modId         : modId,
+                    modName       : modName,
+                    modAuthor     : modAuthor,
+                    modDescription: modDescription,
+                    modLicense    : modLicense,
+                    modHomepageUrl: modHomepageUrl,
+                    modIssueUrl   : modIssueUrl,
+                    modVersion    : project.version
+            )
+        }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+    }
+}

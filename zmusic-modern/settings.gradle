@@ -1,0 +1,23 @@
+pluginManagement {
+    repositories {
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+rootProject.name = "zmusic-modern"
+
+include(
+        "zmusic-fabric-1.16.5",
+        "zmusic-fabric-1.21.8",
+        "zmusic-fabric-26.1",
+        "zmusic-neoforge-1.21.1",
+)

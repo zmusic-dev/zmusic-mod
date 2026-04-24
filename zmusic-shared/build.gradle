@@ -1,0 +1,38 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+def sharedProps = new Properties()
+file('../zmusic.properties').withInputStream { sharedProps.load(it) }
+
+group = sharedProps.getProperty('modGroup')
+version = sharedProps.getProperty('modVersion')
+
+description = 'Shared constants for ZMusic.'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+    withSourcesJar()
+    withJavadocJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 8
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifactId = 'zmusic-shared'
+        }
+    }
+}

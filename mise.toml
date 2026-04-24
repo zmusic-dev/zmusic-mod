@@ -1,0 +1,18 @@
+[tools]
+java = "temurin-25"
+
+[tasks."publish:shared"]
+description = "发布共享库模块"
+run = "./zmusic-shared/gradlew -p zmusic-shared publishToMavenLocal"
+
+[tasks."build:modern"]
+description = "构建现代版本线"
+run = "./zmusic-shared/gradlew -p zmusic-shared publishToMavenLocal && ./zmusic-modern/gradlew -p zmusic-modern build"
+
+[tasks."build:legacy"]
+description = "构建经典版本线"
+run = "./zmusic-shared/gradlew -p zmusic-shared publishToMavenLocal && ./zmusic-legacy/gradlew -p zmusic-legacy build"
+
+[tasks.build]
+description = "构建全部版本线"
+run = "./zmusic-shared/gradlew -p zmusic-shared publishToMavenLocal && ./zmusic-modern/gradlew -p zmusic-modern build && ./zmusic-legacy/gradlew -p zmusic-legacy build"

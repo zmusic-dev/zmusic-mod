@@ -1,0 +1,24 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version '1.15.3'
+}
+
+description = 'Fabric 26.1 adapter for ZMusic.'
+
+base {
+    archivesName = 'zmusic-fabric-26.1'
+}
+
+dependencies {
+    minecraft 'com.mojang:minecraft:26.1'
+    implementation 'net.fabricmc:fabric-loader:0.18.4'
+    implementation 'net.fabricmc.fabric-api:fabric-api:0.143.12+26.1'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 25
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}

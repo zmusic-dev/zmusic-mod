@@ -1,0 +1,16 @@
+plugins {
+    id 'com.gtnewhorizons.retrofuturagradle' version '1.4.0'
+}
+
+description = 'Forge 1.7.10 adapter for ZMusic.'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+
+minecraft {
+    mcVersion.set('1.7.10')
+    username.set('Developer')
+}

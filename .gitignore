@@ -1,0 +1,33 @@
+# Gradle
+.gradle/
+**/.gradle/
+**/build/
+!src/**/build/
+out/
+gradle-app.setting
+.gradletasknamecache
+
+# Gradle wrapper
+!gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+local.properties
+
+# Claude Code
+.claude/*.local.*
+.codex
+.codex/
+
+# MCP
+.playwright-mcp/
+.playwright-cli/
+
+# Local plans
+IMPLEMENTATION_PLAN.md
+
+# Runtime
+**/run/
