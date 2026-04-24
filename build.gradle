@@ -180,7 +180,7 @@ subprojects {
         }
 
         filesMatching("META-INF/neoforge.mods.toml") {
-            expand "version", project.version
+            expand "version": project.version
         }
 
         filesMatching("mcmod.info") {
