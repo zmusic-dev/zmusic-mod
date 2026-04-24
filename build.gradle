@@ -42,7 +42,6 @@ subprojects {
 
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        destinationDirectory = file("/mnt/d/zmusic-dist")
 
         from {
             //noinspection GroovyMissingReturnStatement
@@ -80,6 +79,10 @@ subprojects {
         }
 
         filesMatching("META-INF/mods.toml") {
+            expand "version": project.version
+        }
+
+        filesMatching("META-INF/neoforge.mods.toml") {
             expand "version": project.version
         }
 
