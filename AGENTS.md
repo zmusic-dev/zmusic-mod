@@ -4,7 +4,7 @@
 
 ## 项目概览
 
-ZMusic Client 是 ZMusic 的 Minecraft 客户端模组工程，采用多加载器架构，支持 Fabric、NeoForge 和 Forge 三条版本线。
+ZMusic Mod 是 ZMusic 的 Minecraft 客户端模组工程，采用多加载器架构，支持 Fabric、NeoForge 和 Forge 三条版本线。
 
 当前仓库采用三套独立构建：
 

@@ -16,7 +16,7 @@
 
 ## 简介
 
-ZMusic Client 是 ZMusic 的 Minecraft 客户端模组，采用多加载器架构，支持 Fabric、NeoForge 和 Forge 三条版本线。
+ZMusic Mod 是 ZMusic 的 Minecraft 客户端模组，采用多加载器架构，支持 Fabric、NeoForge 和 Forge 三条版本线。
 
 ## 版本矩阵
 
@@ -48,13 +48,13 @@ mise run build
 * [NeoForge](https://neoforged.net/) - NeoForge 模组加载器
 * [Forge](https://minecraftforge.net/) - Forge 模组加载器
 
-[banner]: https://socialify.git.ci/zmusic-dev/zmusic-client/image?description=1&forks=1&issues=1&language=1&name=1&pulls=1&stargazers=1&theme=Auto
+[banner]: https://socialify.git.ci/zmusic-dev/zmusic-mod/image?description=1&forks=1&issues=1&language=1&name=1&pulls=1&stargazers=1&theme=Auto
 
-[language]: https://img.shields.io/github/languages/top/zmusic-dev/zmusic-client?style=for-the-badge
+[language]: https://img.shields.io/github/languages/top/zmusic-dev/zmusic-mod?style=for-the-badge
 
-[last-commit]: https://img.shields.io/github/last-commit/zmusic-dev/zmusic-client?style=for-the-badge
+[last-commit]: https://img.shields.io/github/last-commit/zmusic-dev/zmusic-mod?style=for-the-badge
 
-[license]: https://img.shields.io/github/license/zmusic-dev/zmusic-client?style=for-the-badge
+[license]: https://img.shields.io/github/license/zmusic-dev/zmusic-mod?style=for-the-badge
 
 [docs-link]: https://zmusic.zhenxin.me
 
