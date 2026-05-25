@@ -18,6 +18,7 @@ import me.zhenxin.zmusic.manager.SoundManager;
 public class ZMusic {
     @Getter
     private static ZMusicPlayer player;
+    private static boolean shutdownHookRegistered;
     @Getter
     @Setter
     private static SoundManager soundManager;
@@ -25,11 +26,30 @@ public class ZMusic {
     private static String version = "3.1.0";
 
     public static void onEnable() {
+        if (player != null) {
+            player.destroy();
+        }
         player = new ZMusicPlayer();
+        registerShutdownHook();
         log.info("Welcome use ZMusic Mod!");
         log.info("Homepage: https://m.zplu.cc");
         log.info("Github: https://github.com/RealHeart/ZMusic-Mod");
         log.info("Discord: https://discord.gg/twQgJNufYn");
         log.info("QQ Group: 1032722724");
+    }
+
+    public static void onDisable() {
+        if (player != null) {
+            player.destroy();
+            player = null;
+        }
+    }
+
+    private static void registerShutdownHook() {
+        if (shutdownHookRegistered) {
+            return;
+        }
+        Runtime.getRuntime().addShutdownHook(new Thread(ZMusic::onDisable, "zmusic-shutdown"));
+        shutdownHookRegistered = true;
     }
 }

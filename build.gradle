@@ -116,12 +116,14 @@ subprojects {
 
                 nativePlatforms.each { platform, config ->
                     def libName = config.libName as String
-                    def libFile = new File(outDir, libName)
+                    def platformDir = new File(outDir, platform)
+                    def libFile = new File(platformDir, libName)
 
                     if (libFile.exists() && libFile.length() > 0) {
-                        logger.lifecycle("Native lib already exists: ${libName}")
+                        logger.lifecycle("Native lib already exists: ${platform}/${libName}")
                         return
                     }
+                    platformDir.mkdirs()
 
                     def pattern = config.pattern
                     def asset = json.assets.find { it.name ==~ pattern }
@@ -137,12 +139,12 @@ subprojects {
                     ant.get(src: downloadUrl, dest: archiveFile)
 
                     if (archiveFile.name.endsWith('.tar.gz') || archiveFile.name.endsWith('.tgz')) {
-                        ant.untar(src: archiveFile, dest: outDir, compression: 'gzip') {
+                        ant.untar(src: archiveFile, dest: platformDir, compression: 'gzip') {
                             patternset { include(name: "**/${libName}") }
                             mapper(type: 'flatten')
                         }
                     } else if (archiveFile.name.endsWith('.zip')) {
-                        ant.unzip(src: archiveFile, dest: outDir) {
+                        ant.unzip(src: archiveFile, dest: platformDir) {
                             patternset { include(name: "**/${libName}") }
                             mapper(type: 'flatten')
                         }
@@ -154,7 +156,7 @@ subprojects {
                         throw new GradleException("Failed to extract ${libName} from archive")
                     }
 
-                    logger.lifecycle("Native library extracted: ${libName} (${libFile.length()} bytes)")
+                    logger.lifecycle("Native library extracted: ${platform}/${libName} (${libFile.length()} bytes)")
                 }
             }
         }
@@ -162,7 +164,7 @@ subprojects {
         jar {
             dependsOn(downloadNativeLibs)
             from(nativeBuildDir) {
-                include('libzmusic.so', 'zmusic.dll', 'libzmusic.dylib')
+                include('*/libzmusic.so', '*/zmusic.dll', '*/libzmusic.dylib')
                 into('META-INF/native')
             }
         }

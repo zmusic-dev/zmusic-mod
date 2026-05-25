@@ -19,6 +19,8 @@ import java.util.Locale;
  */
 public class ZMusicPlayer {
 
+    private static final String NATIVE_RESOURCE_ROOT = "META-INF/native";
+
     static {
         loadNativeLibrary();
     }
@@ -308,12 +310,13 @@ public class ZMusicPlayer {
         }
 
         String libName = getNativeLibName();
-        String resourcePath = "META-INF/native/" + libName;
+        String platform = getNativePlatform();
+        String resourcePath = NATIVE_RESOURCE_ROOT + "/" + platform + "/" + libName;
         try (InputStream is = ZMusicPlayer.class.getClassLoader().getResourceAsStream(resourcePath)) {
             if (is == null) {
                 throw new RuntimeException("Native library not found in classpath: " + resourcePath);
             }
-            Path libDir = Paths.get(System.getProperty("user.home"), ".zmusic", "native");
+            Path libDir = Paths.get(System.getProperty("user.home"), ".zmusic", "native", platform);
             Files.createDirectories(libDir);
             Path libFile = libDir.resolve(libName);
             Files.copy(is, libFile, StandardCopyOption.REPLACE_EXISTING);
@@ -329,5 +332,25 @@ public class ZMusicPlayer {
         if (os.contains("win")) return "zmusic.dll";
         if (os.contains("mac")) return "libzmusic.dylib";
         return "libzmusic.so";
+    }
+
+    private static String getNativePlatform() {
+        String os = System.getProperty("os.name").toLowerCase(Locale.ROOT);
+        String arch = normalizeArch(System.getProperty("os.arch").toLowerCase(Locale.ROOT));
+
+        if (os.contains("linux")) return arch + "-linux";
+        if (os.contains("win")) return arch + "-windows";
+        if (os.contains("mac")) return arch + "-macos";
+        return arch + "-linux";
+    }
+
+    private static String normalizeArch(String arch) {
+        if ("amd64".equals(arch) || "x86_64".equals(arch)) {
+            return "x86_64";
+        }
+        if ("aarch64".equals(arch) || "arm64".equals(arch)) {
+            return "aarch64";
+        }
+        return arch;
     }
 }
