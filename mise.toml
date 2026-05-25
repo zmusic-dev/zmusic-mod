@@ -1,0 +1,2 @@
+[tools]
+java = ["temurin-21", "temurin-17", "temurin-16", "temurin-8"]
