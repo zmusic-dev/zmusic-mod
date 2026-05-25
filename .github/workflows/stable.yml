@@ -5,7 +5,6 @@ on:
   push:
     tags:
       - 'v*'
-      - '!v*-native'
 
 jobs:
   build:
@@ -44,6 +43,7 @@ jobs:
             zmusic-fabric/zmusic-fabric-1.20/build/libs/**.jar
             zmusic-fabric/zmusic-fabric-1.20.5/build/libs/**.jar
             zmusic-fabric/zmusic-fabric-1.21/build/libs/**.jar
+            zmusic-fabric/zmusic-fabric-1.21.8/build/libs/**.jar
             zmusic-forge/zmusic-forge-1.12.2/build/libs/**.jar
             zmusic-forge/zmusic-forge-1.14.4/build/libs/**.jar
             zmusic-forge/zmusic-forge-1.15.2/build/libs/**.jar
