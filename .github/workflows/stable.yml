@@ -23,10 +23,8 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties', 'mise.toml') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-      - name: Prepare Gradle Wrapper
-        run: chmod +x gradlew
-      - name: Build with Gradle
-        run: mise run build
+      - name: Build
+        run: mise run ci
       - name: Release
         uses: softprops/action-gh-release@v3
         with:

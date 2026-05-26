@@ -32,10 +32,8 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties', 'mise.toml') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-      - name: Prepare Gradle Wrapper
-        run: chmod +x gradlew
-      - name: Build with Gradle
-        run: mise run build
+      - name: Build
+        run: mise run ci
       # Fabric 1.21.8
       - name: Upload Artifact (Fabric 1.21.8)
         uses: actions/upload-artifact@v7
