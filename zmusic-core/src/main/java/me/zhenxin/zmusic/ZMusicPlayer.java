@@ -2,10 +2,10 @@ package me.zhenxin.zmusic;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Locale;
 
 /**
@@ -108,16 +108,23 @@ public class ZMusicPlayer {
     /**
      * 销毁播放器，释放原生资源。
      */
-    public void destroy() {
+    public synchronized void destroy() {
         running = false;
         Thread thread = pollingThread;
         if (thread != null) {
-            thread.interrupt();
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return;
+            if (thread != Thread.currentThread()) {
+                thread.interrupt();
+                boolean interrupted = false;
+                while (thread.isAlive()) {
+                    try {
+                        thread.join();
+                    } catch (InterruptedException e) {
+                        interrupted = true;
+                    }
+                }
+                if (interrupted) {
+                    Thread.currentThread().interrupt();
+                }
             }
             pollingThread = null;
         }
@@ -277,7 +284,7 @@ public class ZMusicPlayer {
         void onBuffering(boolean buffering);
     }
 
-    private EventListener listener;
+    private volatile EventListener listener;
 
     /**
      * 设置事件监听器。
@@ -296,17 +303,18 @@ public class ZMusicPlayer {
         pollingThread = new Thread(() -> {
             while (running && handle != 0) {
                 int event = nativePollEvent(handle);
-                if (event != EVENT_NONE && listener != null) {
+                EventListener currentListener = listener;
+                if (event != EVENT_NONE && currentListener != null) {
                     if (event == EVENT_STATE_CHANGED) {
-                        listener.onStateChanged(nativeGetState(handle));
+                        currentListener.onStateChanged(nativeGetState(handle));
                     } else if (event == EVENT_TRACK_ENDED) {
-                        listener.onTrackEnded();
+                        currentListener.onTrackEnded();
                     } else if (event == EVENT_PROGRESS_UPDATE) {
-                        listener.onProgress(nativeGetPosition(handle), nativeGetDuration(handle));
+                        currentListener.onProgress(nativeGetPosition(handle), nativeGetDuration(handle));
                     } else if (event == EVENT_ERROR) {
-                        listener.onError("播放错误");
+                        currentListener.onError("播放错误");
                     } else if (event == EVENT_BUFFERING) {
-                        listener.onBuffering(true);
+                        currentListener.onBuffering(true);
                     }
                 }
                 try { Thread.sleep(50); } catch (InterruptedException e) { break; }
@@ -334,7 +342,10 @@ public class ZMusicPlayer {
             Path libDir = Paths.get(System.getProperty("user.home"), ".zmusic", "native", platform);
             Files.createDirectories(libDir);
             Path libFile = libDir.resolve(libName);
-            Files.copy(is, libFile, StandardCopyOption.REPLACE_EXISTING);
+            try {
+                Files.copy(is, libFile);
+            } catch (FileAlreadyExistsException ignored) {
+            }
             System.load(libFile.toString());
         } catch (IOException e) {
             throw new RuntimeException("Failed to extract native library", e);
@@ -353,10 +364,10 @@ public class ZMusicPlayer {
         String os = System.getProperty("os.name").toLowerCase(Locale.ROOT);
         String arch = normalizeArch(System.getProperty("os.arch").toLowerCase(Locale.ROOT));
 
-        if (os.contains("linux")) return arch + "-linux";
-        if (os.contains("win")) return arch + "-windows";
-        if (os.contains("mac")) return arch + "-macos";
-        return arch + "-linux";
+        if (os.contains("linux") && "x86_64".equals(arch)) return "x86_64-linux";
+        if (os.contains("win") && "x86_64".equals(arch)) return "x86_64-windows";
+        if (os.contains("mac") && ("x86_64".equals(arch) || "aarch64".equals(arch))) return arch + "-macos";
+        throw new UnsupportedOperationException("Unsupported native platform: " + os + " " + arch);
     }
 
     private static String normalizeArch(String arch) {
