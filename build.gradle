@@ -169,18 +169,6 @@ subprojects {
             }
         }
 
-        tasks.register('sharedJar', Jar) {
-            archiveClassifier = 'shared'
-            dependsOn(jar)
-            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-            from {
-                zipTree(jar.archiveFile.get().asFile)
-            }
-            exclude('META-INF/native/**')
-        }
-
-        assemble.dependsOn(tasks.named('sharedJar'))
     }
 
     processResources {
