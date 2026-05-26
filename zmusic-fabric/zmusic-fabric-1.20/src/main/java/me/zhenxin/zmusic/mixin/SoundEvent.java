@@ -1,6 +1,7 @@
 package me.zhenxin.zmusic.mixin;
 
 import me.zhenxin.zmusic.ZMusic;
+import me.zhenxin.zmusic.ZMusicPlayer;
 import net.minecraft.client.sound.SoundInstance;
 import net.minecraft.client.sound.SoundSystem;
 import net.minecraft.sound.SoundCategory;
@@ -13,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class SoundEvent {
     @Inject(method = "play(Lnet/minecraft/client/sound/SoundInstance;)V", at = @At("HEAD"), cancellable = true)
     public void play(SoundInstance soundInstance, CallbackInfo info) {
-        if (ZMusic.getPlayer().isPlay()) {
+        if (ZMusic.getPlayer().getState() == ZMusicPlayer.STATE_PLAYING) {
             SoundCategory data = soundInstance.getCategory();
             switch (data) {
                 case RECORDS:
@@ -23,10 +24,5 @@ public class SoundEvent {
                 default:
             }
         }
-    }
-
-    @Inject(method = "reloadSounds", at = @At("RETURN"))
-    public void reload(CallbackInfo info) {
-        ZMusic.getPlayer().setReload();
     }
 }

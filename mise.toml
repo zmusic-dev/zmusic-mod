@@ -1,0 +1,12 @@
+[tools]
+java = ["temurin-21", "temurin-17", "temurin-16", "temurin-8"]
+
+[tasks.clean]
+run = "./gradlew clean --no-daemon"
+
+[tasks.build]
+run = '''
+./gradlew clean build --no-daemon \
+  -Dnet.minecraftforge.gradle.check.certs=false \
+  -Porg.gradle.java.installations.paths="$(mise where java@temurin-8),$(mise where java@temurin-16),$(mise where java@temurin-17),$(mise where java@temurin-21)"
+'''

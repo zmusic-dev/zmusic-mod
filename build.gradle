@@ -15,6 +15,94 @@ def gitCommitHash = {
     }
 }
 
+// ---- zmusic-player native library ----
+
+ext {
+    zmusicPlayerVersion = project.hasProperty('zmusicPlayerVersion')
+            ? project.property('zmusicPlayerVersion').toString()
+            : (project.findProperty('zmusicPlayerVersion')?.toString() ?: '1.0.0-alpha.2')
+    nativePlatforms = [
+        'x86_64-linux'   : [libName: 'libzmusic.so',    pattern: ~/zmusic-x86_64-linux-.*\.tar\.gz/],
+        'x86_64-windows' : [libName: 'zmusic.dll',      pattern: ~/zmusic-x86_64-windows-.*\.zip/],
+        'aarch64-macos'  : [libName: 'libzmusic.dylib', pattern: ~/zmusic-aarch64-macos-.*\.tar\.gz/],
+        'x86_64-macos'   : [libName: 'libzmusic.dylib', pattern: ~/zmusic-x86_64-macos-.*\.tar\.gz/]
+    ]
+}
+
+def isLeafPlatformProject(Project p) {
+    return p.name ==~ /zmusic-(fabric|forge|neoforge)-\d+.*/
+}
+
+def nativeBuildDir = layout.buildDirectory.dir("native")
+
+tasks.register('downloadNativeLibs') {
+    inputs.property('zmusicPlayerVersion', zmusicPlayerVersion)
+    outputs.dir(nativeBuildDir)
+
+    doLast {
+        def outDir = nativeBuildDir.get().asFile
+        if (outDir.exists()) {
+            outDir.deleteDir()
+        }
+        outDir.mkdirs()
+
+        def apiUrl = "https://api.github.com/repos/zmusic-dev/zmusic-player/releases/tags/v${zmusicPlayerVersion}"
+        def conn = new URL(apiUrl).openConnection()
+        conn.setRequestProperty('Accept', 'application/vnd.github+json')
+        conn.setRequestProperty('User-Agent', 'ZMusic-Gradle-Build')
+
+        if (conn.responseCode != 200) {
+            throw new GradleException(
+                    "Failed to fetch zmusic-player release info (HTTP ${conn.responseCode}). "
+                            + "Check version '${zmusicPlayerVersion}' and GitHub API rate limits.")
+        }
+
+        def json = new groovy.json.JsonSlurper().parse(conn.inputStream as InputStream)
+        conn.disconnect()
+
+        nativePlatforms.each { platform, config ->
+            def libName = config.libName as String
+            def platformDir = new File(outDir, platform)
+            def libFile = new File(platformDir, libName)
+            platformDir.mkdirs()
+
+            def pattern = config.pattern
+            def asset = json.assets.find { it.name ==~ pattern }
+            if (!asset) {
+                throw new GradleException("No zmusic-player asset found for platform '${platform}'")
+            }
+
+            def downloadUrl = asset.browser_download_url as String
+            def archiveFile = new File(outDir, asset.name as String)
+
+            logger.lifecycle("Downloading zmusic-player native lib: ${asset.name}")
+            ant.get(src: downloadUrl, dest: archiveFile)
+
+            if (archiveFile.name.endsWith('.tar.gz') || archiveFile.name.endsWith('.tgz')) {
+                ant.untar(src: archiveFile, dest: platformDir, compression: 'gzip') {
+                    patternset { include(name: "**/${libName}") }
+                    mapper(type: 'flatten')
+                }
+            } else if (archiveFile.name.endsWith('.zip')) {
+                ant.unzip(src: archiveFile, dest: platformDir) {
+                    patternset { include(name: "**/${libName}") }
+                    mapper(type: 'flatten')
+                }
+            } else {
+                throw new GradleException("Unsupported zmusic-player archive: ${archiveFile.name}")
+            }
+
+            archiveFile.delete()
+
+            if (!libFile.exists() || libFile.length() == 0) {
+                throw new GradleException("Failed to extract ${platform}/${libName} from archive")
+            }
+
+            logger.lifecycle("Native library extracted: ${platform}/${libName} (${libFile.length()} bytes)")
+        }
+    }
+}
+
 allprojects {
     repositories {
         mavenCentral()
@@ -33,7 +121,7 @@ subprojects {
     apply plugin: 'java-library'
 
     group = "me.zhenxin"
-    version = "3.5.0"
+    version = "3.6.0"
 
     dependencies {
         compileOnly("org.projectlombok:lombok:1.18.46")
@@ -69,6 +157,18 @@ subprojects {
                 ])
             }
         }
+    }
+
+    // ---- Native library packaging (leaf platform projects only) ----
+    if (isLeafPlatformProject(project)) {
+        jar {
+            dependsOn(rootProject.tasks.named('downloadNativeLibs'))
+            from(nativeBuildDir) {
+                include('*/libzmusic.so', '*/zmusic.dll', '*/libzmusic.dylib')
+                into('META-INF/native')
+            }
+        }
+
     }
 
     processResources {

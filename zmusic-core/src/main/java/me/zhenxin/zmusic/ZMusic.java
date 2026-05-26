@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import me.zhenxin.zmusic.manager.SoundManager;
-import me.zhenxin.zmusic.player.MusicPlayer;
 
 
 /**
@@ -18,7 +17,8 @@ import me.zhenxin.zmusic.player.MusicPlayer;
 @Log4j2
 public class ZMusic {
     @Getter
-    private static MusicPlayer player;
+    private static ZMusicPlayer player;
+    private static boolean shutdownHookRegistered;
     @Getter
     @Setter
     private static SoundManager soundManager;
@@ -26,11 +26,30 @@ public class ZMusic {
     private static String version = "3.1.0";
 
     public static void onEnable() {
-        player = new MusicPlayer();
+        if (player != null) {
+            player.destroy();
+        }
+        player = new ZMusicPlayer();
+        registerShutdownHook();
         log.info("Welcome use ZMusic Mod!");
         log.info("Homepage: https://m.zplu.cc");
         log.info("Github: https://github.com/RealHeart/ZMusic-Mod");
         log.info("Discord: https://discord.gg/twQgJNufYn");
         log.info("QQ Group: 1032722724");
+    }
+
+    public static void onDisable() {
+        if (player != null) {
+            player.destroy();
+            player = null;
+        }
+    }
+
+    private static void registerShutdownHook() {
+        if (shutdownHookRegistered) {
+            return;
+        }
+        Runtime.getRuntime().addShutdownHook(new Thread(ZMusic::onDisable, "zmusic-shutdown"));
+        shutdownHookRegistered = true;
     }
 }
