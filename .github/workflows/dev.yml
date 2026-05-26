@@ -33,7 +33,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
       - name: Build
-        run: mise run ci
+        run: mise run build
       # Fabric 1.21.8
       - name: Upload Artifact (Fabric 1.21.8)
         uses: actions/upload-artifact@v7

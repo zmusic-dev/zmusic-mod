@@ -10,6 +10,3 @@ run = '''
   -Dnet.minecraftforge.gradle.check.certs=false \
   -Porg.gradle.java.installations.paths="$(mise where java@temurin-8),$(mise where java@temurin-16),$(mise where java@temurin-17),$(mise where java@temurin-21)"
 '''
-
-[tasks.ci]
-run = "mise run build"

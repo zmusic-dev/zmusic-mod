@@ -1,11 +1,17 @@
 package me.zhenxin.zmusic;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
 
 /**
@@ -20,10 +26,9 @@ import java.util.Locale;
 public class ZMusicPlayer {
 
     private static final String NATIVE_RESOURCE_ROOT = "META-INF/native";
-
-    static {
-        loadNativeLibrary();
-    }
+    private static final Object NATIVE_LOAD_LOCK = new Object();
+    private static volatile boolean nativeLibraryLoaded;
+    private static volatile Path nativeDirectory;
 
     private long handle;
     private Thread pollingThread;
@@ -99,10 +104,18 @@ public class ZMusicPlayer {
      * @throws RuntimeException 原生层初始化失败时抛出
      */
     public ZMusicPlayer() {
+        ensureNativeLibraryLoaded();
         handle = nativeInit();
         if (handle == 0) {
             throw new RuntimeException("ZMusicPlayer 初始化失败");
         }
+    }
+
+    /**
+     * 设置 bundled native fallback 的提取目录。
+     */
+    public static void setNativeDirectory(Path nativeDirectory) {
+        ZMusicPlayer.nativeDirectory = nativeDirectory;
     }
 
     /**
@@ -293,6 +306,32 @@ public class ZMusicPlayer {
         this.listener = listener;
         if (listener != null) {
             startPollingThread();
+        } else {
+            stopPollingThread();
+        }
+    }
+
+    private synchronized void stopPollingThread() {
+        Thread thread = pollingThread;
+        if (thread == null) {
+            return;
+        }
+        thread.interrupt();
+        if (thread != Thread.currentThread()) {
+            boolean interrupted = false;
+            while (thread.isAlive()) {
+                try {
+                    thread.join();
+                } catch (InterruptedException e) {
+                    interrupted = true;
+                }
+            }
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        if (pollingThread == thread) {
+            pollingThread = null;
         }
     }
 
@@ -325,6 +364,19 @@ public class ZMusicPlayer {
         pollingThread.start();
     }
 
+    private static void ensureNativeLibraryLoaded() {
+        if (nativeLibraryLoaded) {
+            return;
+        }
+        synchronized (NATIVE_LOAD_LOCK) {
+            if (nativeLibraryLoaded) {
+                return;
+            }
+            loadNativeLibrary();
+            nativeLibraryLoaded = true;
+        }
+    }
+
     private static void loadNativeLibrary() {
         try {
             System.loadLibrary("zmusic");
@@ -339,17 +391,151 @@ public class ZMusicPlayer {
             if (is == null) {
                 throw new RuntimeException("Native library not found in classpath: " + resourcePath);
             }
-            Path libDir = Paths.get(System.getProperty("user.home"), ".zmusic", "native", platform);
+            byte[] libBytes = readAllBytes(is);
+            String hash = sha256(libBytes).substring(0, 16);
+            Path libDir = getNativeDirectory();
             Files.createDirectories(libDir);
-            Path libFile = libDir.resolve(libName);
-            try {
-                Files.copy(is, libFile);
-            } catch (FileAlreadyExistsException ignored) {
-            }
+            Path libFile = libDir.resolve(getHashedLibName(libName, hash));
+            writeNativeLibraryIfAbsent(libDir, libFile, libBytes, hash);
             System.load(libFile.toString());
-        } catch (IOException e) {
+        } catch (IOException | NoSuchAlgorithmException e) {
             throw new RuntimeException("Failed to extract native library", e);
         }
+    }
+
+    private static void writeNativeLibraryIfAbsent(Path libDir, Path libFile, byte[] libBytes, String expectedHash)
+            throws IOException, NoSuchAlgorithmException {
+        if (isValidNativeLibrary(libFile, expectedHash)) {
+            return;
+        }
+        Files.deleteIfExists(libFile);
+
+        Path tempFile = Files.createTempFile(libDir, "zmusic-", ".tmp");
+        try {
+            Files.write(tempFile, libBytes, StandardOpenOption.WRITE);
+            try {
+                Files.move(tempFile, libFile, StandardCopyOption.ATOMIC_MOVE);
+            } catch (FileAlreadyExistsException ignored) {
+            } catch (IOException e) {
+                try {
+                    Files.move(tempFile, libFile);
+                } catch (FileAlreadyExistsException ignored) {
+                }
+            }
+        } finally {
+            Files.deleteIfExists(tempFile);
+        }
+        if (!isValidNativeLibrary(libFile, expectedHash)) {
+            throw new IOException("Cached native library has unexpected content: " + libFile);
+        }
+    }
+
+    private static boolean isValidNativeLibrary(Path libFile, String expectedHash)
+            throws IOException, NoSuchAlgorithmException {
+        return Files.exists(libFile) && sha256(Files.readAllBytes(libFile)).startsWith(expectedHash);
+    }
+
+    private static Path getNativeDirectory() {
+        Path configuredDirectory = nativeDirectory;
+        if (configuredDirectory != null) {
+            return configuredDirectory;
+        }
+
+        Path gameDir = findGameDirectory();
+        return gameDir.resolve("zmusic");
+    }
+
+    private static Path findGameDirectory() {
+        Path fabricGameDir = getFabricGameDirectory();
+        if (fabricGameDir != null) {
+            return fabricGameDir;
+        }
+
+        Path forgeGameDir = getFmlGameDirectory("net.minecraftforge.fml.loading.FMLPaths");
+        if (forgeGameDir != null) {
+            return forgeGameDir;
+        }
+
+        Path neoForgeGameDir = getFmlGameDirectory("net.neoforged.fml.loading.FMLPaths");
+        if (neoForgeGameDir != null) {
+            return neoForgeGameDir;
+        }
+
+        Path legacyMinecraftDir = getLegacyMinecraftDirectory();
+        if (legacyMinecraftDir != null) {
+            return legacyMinecraftDir;
+        }
+
+        return Paths.get(System.getProperty("user.dir"));
+    }
+
+    private static Path getFabricGameDirectory() {
+        try {
+            Class<?> loaderClass = Class.forName("net.fabricmc.loader.api.FabricLoader");
+            Object loader = loaderClass.getMethod("getInstance").invoke(null);
+            Object gameDir = loaderClass.getMethod("getGameDir").invoke(loader);
+            if (gameDir instanceof Path) {
+                return (Path) gameDir;
+            }
+        } catch (ReflectiveOperationException | LinkageError ignored) {
+        }
+        return null;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static Path getFmlGameDirectory(String className) {
+        try {
+            Class<?> pathsClass = Class.forName(className);
+            Object gameDirEntry = Enum.valueOf((Class<Enum>) pathsClass.asSubclass(Enum.class), "GAMEDIR");
+            Method getMethod = pathsClass.getMethod("get");
+            Object gameDir = getMethod.invoke(gameDirEntry);
+            if (gameDir instanceof Path) {
+                return (Path) gameDir;
+            }
+        } catch (ReflectiveOperationException | IllegalArgumentException | LinkageError ignored) {
+        }
+        return null;
+    }
+
+    private static Path getLegacyMinecraftDirectory() {
+        try {
+            Class<?> minecraftClass = Class.forName("net.minecraft.client.Minecraft");
+            Object minecraft = minecraftClass.getMethod("getMinecraft").invoke(null);
+            Object mcDataDir = minecraftClass.getField("mcDataDir").get(minecraft);
+            if (mcDataDir instanceof java.io.File) {
+                return ((java.io.File) mcDataDir).toPath();
+            }
+        } catch (ReflectiveOperationException | LinkageError ignored) {
+        }
+        return null;
+    }
+
+    private static byte[] readAllBytes(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int length;
+        while ((length = inputStream.read(buffer)) != -1) {
+            outputStream.write(buffer, 0, length);
+        }
+        return outputStream.toByteArray();
+    }
+
+    private static String sha256(byte[] bytes) throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hash = digest.digest(bytes);
+        StringBuilder builder = new StringBuilder(hash.length * 2);
+        for (byte b : hash) {
+            builder.append(String.format("%02x", b & 0xff));
+        }
+        return builder.toString();
+    }
+
+    private static String getHashedLibName(String libName, String hash) {
+        int extensionIndex = libName.lastIndexOf('.');
+        if (extensionIndex <= 0) {
+            return libName + "-" + hash;
+        }
+        return libName.substring(0, extensionIndex) + "-" + hash + libName.substring(extensionIndex);
     }
 
     private static String getNativeLibName() {

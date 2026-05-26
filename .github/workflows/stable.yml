@@ -24,7 +24,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
       - name: Build
-        run: mise run ci
+        run: mise run build
       - name: Release
         uses: softprops/action-gh-release@v3
         with:
