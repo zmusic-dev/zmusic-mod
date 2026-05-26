@@ -17,7 +17,7 @@ pluginManagement {
     }
 }
 
-rootProject.name = "ZMusic-Mod"
+rootProject.name = "zmusic-mod"
 
 include("zmusic-core")
 include(

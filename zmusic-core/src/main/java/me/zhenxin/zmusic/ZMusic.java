@@ -31,9 +31,9 @@ public class ZMusic {
         }
         player = new ZMusicPlayer();
         registerShutdownHook();
-        log.info("Welcome use ZMusic Mod!");
+        log.info("Welcome use ZMusic!");
         log.info("Homepage: https://m.zplu.cc");
-        log.info("Github: https://github.com/RealHeart/ZMusic-Mod");
+        log.info("Github: https://github.com/zmusic-dev/zmusic-mod");
         log.info("Discord: https://discord.gg/twQgJNufYn");
         log.info("QQ Group: 1032722724");
     }

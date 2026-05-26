@@ -1,11 +1,11 @@
 modLoader = "javafml"
 loaderVersion = "[43,)"
 license = "GPL-3.0-only"
-issueTrackerURL = "https://github.com/RealHeart/ZMusic/issues"
+issueTrackerURL = "https://github.com/zmusic-dev/zmusic-mod/issues"
 [[mods]]
 modId = "zmusic"
 version = "${version}"
-displayName = "ZMusic Mod"
+displayName = "ZMusic"
 description = "Powerful Music System"
 displayURL = "https://m.zplu.cc"
 authors = "ZhenXin"

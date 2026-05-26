@@ -1,7 +1,7 @@
 [
   {
     "modid": "zmusic",
-    "name": "ZMusic Mod",
+    "name": "ZMusic",
     "description": "Powerful Music System",
     "version": "${version}",
     "mcversion": "1.12.2",

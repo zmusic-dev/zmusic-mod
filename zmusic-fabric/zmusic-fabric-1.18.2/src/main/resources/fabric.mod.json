@@ -2,15 +2,15 @@
   "schemaVersion": 1,
   "id": "zmusic",
   "version": "${version}",
-  "name": "ZMusic Mod",
+  "name": "ZMusic",
   "description": "Powerful Music System",
   "authors": [
     "ZhenXin"
   ],
   "contact": {
     "homepage": "https://m.zplu.cc",
-    "sources": "https://github.com/RealHeart/ZMusic-Mod",
-    "issues": "https://github.com/RealHeart/ZMusic-Mod/issues",
+    "sources": "https://github.com/zmusic-dev/zmusic-mod",
+    "issues": "https://github.com/zmusic-dev/zmusic-mod/issues",
     "discord": "https://discord.gg/twQgJNufYn"
   },
   "license": "GPL-3.0",
