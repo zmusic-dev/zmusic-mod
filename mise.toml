@@ -8,5 +8,5 @@ run = "./gradlew clean --no-daemon"
 run = '''
 ./gradlew clean build --no-daemon \
   -Dnet.minecraftforge.gradle.check.certs=false \
-  -Dorg.gradle.java.installations.paths="$(mise where java@temurin-8),$(mise where java@temurin-16),$(mise where java@temurin-17),$(mise where java@temurin-21)"
+  -Porg.gradle.java.installations.paths="$(mise where java@temurin-8),$(mise where java@temurin-16),$(mise where java@temurin-17),$(mise where java@temurin-21)"
 '''
