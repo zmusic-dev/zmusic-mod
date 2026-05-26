@@ -26,6 +26,7 @@ public class ZMusicPlayer {
     }
 
     private long handle;
+    private Thread pollingThread;
 
     // ---- Native 方法声明 ----
 
@@ -109,6 +110,17 @@ public class ZMusicPlayer {
      */
     public void destroy() {
         running = false;
+        Thread thread = pollingThread;
+        if (thread != null) {
+            thread.interrupt();
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+            pollingThread = null;
+        }
         if (handle != 0) {
             nativeDestroy(handle);
             handle = 0;
@@ -277,8 +289,11 @@ public class ZMusicPlayer {
         }
     }
 
-    private void startPollingThread() {
-        Thread thread = new Thread(() -> {
+    private synchronized void startPollingThread() {
+        if (pollingThread != null && pollingThread.isAlive()) {
+            return;
+        }
+        pollingThread = new Thread(() -> {
             while (running && handle != 0) {
                 int event = nativePollEvent(handle);
                 if (event != EVENT_NONE && listener != null) {
@@ -297,9 +312,9 @@ public class ZMusicPlayer {
                 try { Thread.sleep(50); } catch (InterruptedException e) { break; }
             }
         });
-        thread.setDaemon(true);
-        thread.setName("zmusic-event-poll");
-        thread.start();
+        pollingThread.setDaemon(true);
+        pollingThread.setName("zmusic-event-poll");
+        pollingThread.start();
     }
 
     private static void loadNativeLibrary() {
