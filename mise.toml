@@ -1,5 +1,5 @@
 [tools]
-java = ["temurin-21", "temurin-17", "temurin-16", "temurin-8"]
+java = ["temurin-25", "temurin-21", "temurin-17", "temurin-16", "temurin-8"]
 
 [tasks.clean]
 run = "./gradlew clean --no-daemon"
@@ -8,5 +8,11 @@ run = "./gradlew clean --no-daemon"
 run = '''
 ./gradlew clean build --no-daemon \
   -Dnet.minecraftforge.gradle.check.certs=false \
-  -Porg.gradle.java.installations.paths="$(mise where java@temurin-8),$(mise where java@temurin-16),$(mise where java@temurin-17),$(mise where java@temurin-21)"
+  -Porg.gradle.java.installations.paths="$(mise where java@temurin-8),$(mise where java@temurin-16),$(mise where java@temurin-17),$(mise where java@temurin-21),$(mise where java@temurin-25)"
+'''
+
+[tasks.build-26]
+run = '''
+scripts/gradle-26.sh :zmusic-fabric-26.1:jar :zmusic-neoforge-26.1:jar --no-daemon \
+  -Porg.gradle.java.installations.paths="$(mise where java@temurin-25)"
 '''

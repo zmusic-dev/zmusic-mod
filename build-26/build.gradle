@@ -1,21 +1,7 @@
-//https://github.com/FabricMC/fabric-loom/issues/1036
 plugins {
-    id("fabric-loom") version "1.11-SNAPSHOT" apply false
+    id("net.fabricmc.fabric-loom") version "1.16.2" apply false
+    id("net.neoforged.gradle.userdev") version "7.1.25" apply false
 }
-
-def gitCommitHash = {
-    def cmd = "git rev-parse --short HEAD"
-    try {
-        def ver = cmd.execute().text.trim()
-        if (ver == "") return ""
-        return "+" + ver
-    } catch (Exception e) {
-        e.printStackTrace()
-        return ""
-    }
-}
-
-// ---- zmusic-player native library ----
 
 ext {
     zmusicPlayerVersion = project.hasProperty('zmusicPlayerVersion')
@@ -29,12 +15,8 @@ ext {
     ]
 }
 
-def isLeafPlatformProject(Project p) {
-    return p.name ==~ /zmusic-(fabric|forge|neoforge)-\d+.*/
-}
-
 def nativeBuildDir = layout.buildDirectory.dir("native")
-def nativeCacheDir = layout.projectDirectory.dir(".gradle/zmusic-player")
+def nativeCacheDir = layout.projectDirectory.dir("../.gradle/zmusic-player")
 
 tasks.register('downloadNativeLibs') {
     inputs.property('zmusicPlayerVersion', zmusicPlayerVersion)
@@ -67,20 +49,18 @@ tasks.register('downloadNativeLibs') {
             def libFile = new File(platformDir, libName)
             platformDir.mkdirs()
 
-            def pattern = config.pattern
-            def asset = json.assets.find { it.name ==~ pattern }
+            def asset = json.assets.find { it.name ==~ config.pattern }
             if (!asset) {
                 throw new GradleException("No zmusic-player asset found for platform '${platform}'")
             }
 
-            def downloadUrl = asset.browser_download_url as String
             def versionCacheDir = new File(nativeCacheDir.asFile, "v${zmusicPlayerVersion}")
             versionCacheDir.mkdirs()
             def archiveFile = new File(versionCacheDir, asset.name as String)
 
             if (!archiveFile.exists() || archiveFile.length() == 0) {
                 logger.lifecycle("Downloading zmusic-player native lib: ${asset.name}")
-                ant.get(src: downloadUrl, dest: archiveFile)
+                ant.get(src: asset.browser_download_url as String, dest: archiveFile)
             } else {
                 logger.lifecycle("Using cached zmusic-player native lib: ${asset.name}")
             }
@@ -102,8 +82,6 @@ tasks.register('downloadNativeLibs') {
             if (!libFile.exists() || libFile.length() == 0) {
                 throw new GradleException("Failed to extract ${platform}/${libName} from archive")
             }
-
-            logger.lifecycle("Native library extracted: ${platform}/${libName} (${libFile.length()} bytes)")
         }
     }
 }
@@ -111,6 +89,14 @@ tasks.register('downloadNativeLibs') {
 allprojects {
     repositories {
         mavenCentral()
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+        maven {
+            name = 'NeoForge'
+            url = 'https://maven.neoforged.net/releases/'
+        }
         maven {
             name = 'Jitpack'
             url = 'https://jitpack.io'
@@ -135,45 +121,15 @@ subprojects {
 
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        from("${rootDir}/../LICENSE")
 
-        from {
-            //noinspection GroovyMissingReturnStatement
-            configurations.runtimeClasspath.collect {
-                if (project.name != "zmusic-core") {
-                    if (it.name.contains("zmusic-core")) {
-                        it.isDirectory() ? it : zipTree(it)
-                    }
-                }
-            }
-        }
-
-        from("${rootDir}/LICENSE")
-
-        if (project.name.contains("zmusic-forge-1") || project.name.contains("zmusic-neoforge-1")) {
-            manifest {
-                attributes([
-                        "Specification-Title"     : "zmusic",
-                        "Specification-Vendor"    : "ZhenXin",
-                        "Specification-Version"   : "1",
-                        "Implementation-Title"    : "ZMusic",
-                        "Implementation-Version"  : project.version,
-                        "Implementation-Vendor"   : "ZhenXin",
-                        "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
-                ])
-            }
-        }
-    }
-
-    // ---- Native library packaging (leaf platform projects only) ----
-    if (isLeafPlatformProject(project)) {
-        jar {
+        if (project.name == "zmusic-fabric-26.1" || project.name == "zmusic-neoforge-26.1") {
             dependsOn(rootProject.tasks.named('downloadNativeLibs'))
             from(nativeBuildDir) {
                 include('*/libzmusic.so', '*/zmusic.dll', '*/libzmusic.dylib')
                 into('META-INF/native')
             }
         }
-
     }
 
     processResources {
@@ -183,15 +139,7 @@ subprojects {
             expand "version": project.version
         }
 
-        filesMatching("META-INF/mods.toml") {
-            expand "version": project.version
-        }
-
         filesMatching("META-INF/neoforge.mods.toml") {
-            expand "version": project.version
-        }
-
-        filesMatching("mcmod.info") {
             expand "version": project.version
         }
     }

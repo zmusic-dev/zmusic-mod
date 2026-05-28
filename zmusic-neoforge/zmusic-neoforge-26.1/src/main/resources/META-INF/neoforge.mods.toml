@@ -1,0 +1,26 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "GPL-3.0-only"
+issueTrackerURL = "https://github.com/zmusic-dev/zmusic-mod/issues"
+
+[[mods]]
+modId = "zmusic"
+version = "${version}"
+displayName = "ZMusic"
+description = "Powerful Music System"
+displayURL = "https://m.zplu.cc"
+authors = "ZhenXin"
+
+[[dependencies.zmusic]]
+modId = "neoforge"
+type = "required"
+versionRange = "[26.1.2,)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.zmusic]]
+modId = "minecraft"
+type = "required"
+versionRange = "[26.1,26.2)"
+ordering = "NONE"
+side = "CLIENT"

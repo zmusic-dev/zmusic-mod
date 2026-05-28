@@ -8,6 +8,7 @@ on:
       - "**.gradle"
       - "**.json"
       - "**.toml"
+      - "scripts/gradle-26.sh"
       - ".github/workflows/dev.yml"
     branches:
       - "dev"
@@ -29,11 +30,22 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
             ~/.gradle/caches/forge_gradle
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties', 'mise.toml') }}
+            .gradle-26
+            .gradle/zmusic-player
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties', 'mise.toml', 'scripts/gradle-26.sh') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
       - name: Build
         run: mise run build
+      - name: Build 26.1
+        run: mise run build-26
+      # Fabric 26.1
+      - name: Upload Artifact (Fabric 26.1)
+        uses: actions/upload-artifact@v7
+        with:
+          name: 'ZMusic Fabric 26.1'
+          path: |
+            zmusic-fabric/zmusic-fabric-26.1/build/libs/**.jar
       # Fabric 1.21.8
       - name: Upload Artifact (Fabric 1.21.8)
         uses: actions/upload-artifact@v7
@@ -190,6 +202,13 @@ jobs:
           path: |
             zmusic-forge/zmusic-forge-1.12.2/build/libs/**.jar
 
+      # NeoForge 26.1
+      - name: Upload Artifact (NeoForge 26.1)
+        uses: actions/upload-artifact@v7
+        with:
+          name: 'ZMusic NeoForge 26.1'
+          path: |
+            zmusic-neoforge/zmusic-neoforge-26.1/build/libs/**.jar
       # NeoForge 1.21.1
       - name: Upload Artifact (NeoForge 1.21.1)
         uses: actions/upload-artifact@v7

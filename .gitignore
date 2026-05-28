@@ -1,6 +1,8 @@
 # gradle
 
 .gradle/
+**/.gradle/
+.gradle-26/
 build/
 out/
 classes/
@@ -20,6 +22,7 @@ classes/
 
 .settings/
 .vscode/
+.eclipse/
 bin/
 .classpath
 .project

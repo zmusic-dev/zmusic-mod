@@ -22,16 +22,21 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
             ~/.gradle/caches/forge_gradle
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties', 'mise.toml') }}
+            .gradle-26
+            .gradle/zmusic-player
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties', 'mise.toml', 'scripts/gradle-26.sh') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
       - name: Build
         run: mise run build
+      - name: Build 26.1
+        run: mise run build-26
       - name: Release
         id: release
         uses: softprops/action-gh-release@v3
         with:
           files: |
+            zmusic-fabric/zmusic-fabric-26.1/build/libs/**.jar
             zmusic-fabric/zmusic-fabric-1.14.4/build/libs/**.jar
             zmusic-fabric/zmusic-fabric-1.15.2/build/libs/**.jar
             zmusic-fabric/zmusic-fabric-1.16.5/build/libs/**.jar
@@ -54,6 +59,7 @@ jobs:
             zmusic-forge/zmusic-forge-1.19.3/build/libs/**.jar
             zmusic-forge/zmusic-forge-1.19.4/build/libs/**.jar
             zmusic-forge/zmusic-forge-1.20/build/libs/**.jar
+            zmusic-neoforge/zmusic-neoforge-26.1/build/libs/**.jar
             zmusic-neoforge/zmusic-neoforge-1.20.4/build/libs/**.jar
             zmusic-neoforge/zmusic-neoforge-1.21.1/build/libs/**.jar
       - name: Sync Release to Codeberg and CNB
