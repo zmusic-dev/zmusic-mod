@@ -186,7 +186,7 @@ subprojects {
         }
 
         filesMatching("META-INF/mods.toml") {
-            expand "version": project.version
+            expand "version": project.version, "description": rootProject.modDescription
         }
 
         filesMatching("META-INF/neoforge.mods.toml") {
@@ -194,7 +194,7 @@ subprojects {
         }
 
         filesMatching("mcmod.info") {
-            expand "version": project.version
+            expand "version": project.version, "description": rootProject.modDescription
         }
     }
 

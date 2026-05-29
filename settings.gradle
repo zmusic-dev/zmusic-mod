@@ -38,9 +38,8 @@ include(
 
 include(
         "zmusic-forge",
-        "zmusic-forge:zmusic-forge-1.20",
+        "zmusic-forge:zmusic-forge-1.20.1",
         "zmusic-forge:zmusic-forge-1.19.4",
-        "zmusic-forge:zmusic-forge-1.19.3",
         "zmusic-forge:zmusic-forge-1.19.2",
         "zmusic-forge:zmusic-forge-1.18.2",
         "zmusic-forge:zmusic-forge-1.17.1",

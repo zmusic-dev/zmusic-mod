@@ -6,8 +6,8 @@ issueTrackerURL = "https://github.com/zmusic-dev/zmusic-mod/issues"
 modId = "zmusic"
 version = "${version}"
 displayName = "ZMusic"
-description = "Powerful Music System"
-displayURL = "https://m.zplu.cc"
+description = "${description}"
+displayURL = "https://zmusic.zhenxin.me"
 authors = "ZhenXin"
 [[dependencies.zmusic]]
 modId = "forge"
@@ -18,6 +18,6 @@ side = "CLIENT"
 [[dependencies.zmusic]]
 modId = "minecraft"
 mandatory = true
-versionRange = "[1.16.5,1.17)"
+versionRange = "[1.16.1,1.17)"
 ordering = "NONE"
 side = "CLIENT"

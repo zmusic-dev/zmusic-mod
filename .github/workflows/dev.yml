@@ -131,13 +131,13 @@ jobs:
           path: |
             zmusic-fabric/zmusic-fabric-1.14.4/build/libs/**.jar
 
-      # Forge 1.20
-      - name: Upload Artifact (Forge 1.20)
+      # Forge 1.20.1
+      - name: Upload Artifact (Forge 1.20.1)
         uses: actions/upload-artifact@v7
         with:
-          name: 'ZMusic Forge 1.20'
+          name: 'ZMusic Forge 1.20.1'
           path: |
-            zmusic-forge/zmusic-forge-1.20/build/libs/**.jar
+            zmusic-forge/zmusic-forge-1.20.1/build/libs/**.jar
       # Forge 1.19.4
       - name: Upload Artifact (Forge 1.19.4)
         uses: actions/upload-artifact@v7
@@ -145,13 +145,6 @@ jobs:
           name: 'ZMusic Forge 1.19.4'
           path: |
             zmusic-forge/zmusic-forge-1.19.4/build/libs/**.jar
-      # Forge 1.19.3
-      - name: Upload Artifact (Forge 1.19.3)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Forge 1.19.3'
-          path: |
-            zmusic-forge/zmusic-forge-1.19.3/build/libs/**.jar
       # Forge 1.19.2
       - name: Upload Artifact (Forge 1.19.2)
         uses: actions/upload-artifact@v7
