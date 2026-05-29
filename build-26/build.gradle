@@ -132,7 +132,7 @@ subprojects {
 
         from("${rootDir}/../LICENSE")
 
-        if (project.name == "zmusic-fabric-26.1" || project.name == "zmusic-neoforge-26.1") {
+        if (project.name == "zmusic-fabric-26.1.2" || project.name == "zmusic-neoforge-26.1.2") {
             dependsOn(rootProject.tasks.named('downloadNativeLibs'))
             from(nativeBuildDir) {
                 include('*/libzmusic.so', '*/zmusic.dll', '*/libzmusic.dylib')

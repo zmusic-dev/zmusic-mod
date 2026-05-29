@@ -13,6 +13,6 @@ run = '''
 
 [tasks.build-26]
 run = '''
-scripts/gradle-26.sh :zmusic-fabric-26.1:jar :zmusic-neoforge-26.1:jar --no-daemon \
+scripts/gradle-26.sh :zmusic-fabric-26.1.2:jar :zmusic-neoforge-26.1.2:jar --no-daemon \
   -Porg.gradle.java.installations.paths="$(mise where java@temurin-25)"
 '''

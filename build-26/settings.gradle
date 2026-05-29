@@ -18,8 +18,8 @@ rootProject.name = "zmusic-mod-26"
 include("zmusic-core")
 project(":zmusic-core").projectDir = file("../zmusic-core")
 
-include("zmusic-fabric-26.1")
-project(":zmusic-fabric-26.1").projectDir = file("../zmusic-fabric/zmusic-fabric-26.1")
+include("zmusic-fabric-26.1.2")
+project(":zmusic-fabric-26.1.2").projectDir = file("../zmusic-fabric/zmusic-fabric-26.1.2")
 
-include("zmusic-neoforge-26.1")
-project(":zmusic-neoforge-26.1").projectDir = file("../zmusic-neoforge/zmusic-neoforge-26.1")
+include("zmusic-neoforge-26.1.2")
+project(":zmusic-neoforge-26.1.2").projectDir = file("../zmusic-neoforge/zmusic-neoforge-26.1.2")
