@@ -29,26 +29,26 @@ jobs:
             ${{ runner.os }}-gradle-
       - name: Build
         run: mise run build
-      - name: Build 26.1
+      - name: Build 26.1.2
         run: mise run build-26
       - name: Release
         id: release
         uses: softprops/action-gh-release@v3
         with:
           files: |
-            zmusic-fabric/zmusic-fabric-26.1/build/libs/**.jar
+            zmusic-fabric/zmusic-fabric-26.1.2/build/libs/**.jar
             zmusic-fabric/zmusic-fabric-1.14.4/build/libs/**.jar
             zmusic-fabric/zmusic-fabric-1.15.2/build/libs/**.jar
             zmusic-fabric/zmusic-fabric-1.16.5/build/libs/**.jar
             zmusic-fabric/zmusic-fabric-1.17.1/build/libs/**.jar
             zmusic-fabric/zmusic-fabric-1.18.2/build/libs/**.jar
             zmusic-fabric/zmusic-fabric-1.19.2/build/libs/**.jar
-            zmusic-fabric/zmusic-fabric-1.19.3/build/libs/**.jar
             zmusic-fabric/zmusic-fabric-1.19.4/build/libs/**.jar
-            zmusic-fabric/zmusic-fabric-1.20/build/libs/**.jar
-            zmusic-fabric/zmusic-fabric-1.20.5/build/libs/**.jar
-            zmusic-fabric/zmusic-fabric-1.21/build/libs/**.jar
-            zmusic-fabric/zmusic-fabric-1.21.8/build/libs/**.jar
+            zmusic-fabric/zmusic-fabric-1.20.1/build/libs/**.jar
+            zmusic-fabric/zmusic-fabric-1.20.4/build/libs/**.jar
+            zmusic-fabric/zmusic-fabric-1.20.6/build/libs/**.jar
+            zmusic-fabric/zmusic-fabric-1.21.5/build/libs/**.jar
+            zmusic-fabric/zmusic-fabric-1.21.11/build/libs/**.jar
             zmusic-forge/zmusic-forge-1.12.2/build/libs/**.jar
             zmusic-forge/zmusic-forge-1.14.4/build/libs/**.jar
             zmusic-forge/zmusic-forge-1.15.2/build/libs/**.jar
@@ -59,7 +59,7 @@ jobs:
             zmusic-forge/zmusic-forge-1.19.3/build/libs/**.jar
             zmusic-forge/zmusic-forge-1.19.4/build/libs/**.jar
             zmusic-forge/zmusic-forge-1.20/build/libs/**.jar
-            zmusic-neoforge/zmusic-neoforge-26.1/build/libs/**.jar
+            zmusic-neoforge/zmusic-neoforge-26.1.2/build/libs/**.jar
             zmusic-neoforge/zmusic-neoforge-1.20.4/build/libs/**.jar
             zmusic-neoforge/zmusic-neoforge-1.21.1/build/libs/**.jar
       - name: Publish to CurseForge and Modrinth
@@ -72,19 +72,19 @@ jobs:
           name: ZMusic ${{ github.ref_name }}
           version: ${{ github.ref_name }}
           files: |
-            zmusic-fabric/zmusic-fabric-26.1/build/libs/**.jar
+            zmusic-fabric/zmusic-fabric-26.1.2/build/libs/**.jar
             zmusic-fabric/zmusic-fabric-1.14.4/build/libs/**.jar
             zmusic-fabric/zmusic-fabric-1.15.2/build/libs/**.jar
             zmusic-fabric/zmusic-fabric-1.16.5/build/libs/**.jar
             zmusic-fabric/zmusic-fabric-1.17.1/build/libs/**.jar
             zmusic-fabric/zmusic-fabric-1.18.2/build/libs/**.jar
             zmusic-fabric/zmusic-fabric-1.19.2/build/libs/**.jar
-            zmusic-fabric/zmusic-fabric-1.19.3/build/libs/**.jar
             zmusic-fabric/zmusic-fabric-1.19.4/build/libs/**.jar
-            zmusic-fabric/zmusic-fabric-1.20/build/libs/**.jar
-            zmusic-fabric/zmusic-fabric-1.20.5/build/libs/**.jar
-            zmusic-fabric/zmusic-fabric-1.21/build/libs/**.jar
-            zmusic-fabric/zmusic-fabric-1.21.8/build/libs/**.jar
+            zmusic-fabric/zmusic-fabric-1.20.1/build/libs/**.jar
+            zmusic-fabric/zmusic-fabric-1.20.4/build/libs/**.jar
+            zmusic-fabric/zmusic-fabric-1.20.6/build/libs/**.jar
+            zmusic-fabric/zmusic-fabric-1.21.5/build/libs/**.jar
+            zmusic-fabric/zmusic-fabric-1.21.11/build/libs/**.jar
             zmusic-forge/zmusic-forge-1.12.2/build/libs/**.jar
             zmusic-forge/zmusic-forge-1.14.4/build/libs/**.jar
             zmusic-forge/zmusic-forge-1.15.2/build/libs/**.jar
@@ -95,7 +95,7 @@ jobs:
             zmusic-forge/zmusic-forge-1.19.3/build/libs/**.jar
             zmusic-forge/zmusic-forge-1.19.4/build/libs/**.jar
             zmusic-forge/zmusic-forge-1.20/build/libs/**.jar
-            zmusic-neoforge/zmusic-neoforge-26.1/build/libs/**.jar
+            zmusic-neoforge/zmusic-neoforge-26.1.2/build/libs/**.jar
             zmusic-neoforge/zmusic-neoforge-1.20.4/build/libs/**.jar
             zmusic-neoforge/zmusic-neoforge-1.21.1/build/libs/**.jar
           version-type: release

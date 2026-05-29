@@ -1,0 +1,21 @@
+plugins {
+    id("fabric-loom") version "1.13.3"
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+dependencies {
+    minecraft("com.mojang:minecraft:1.21.5")
+    mappings("net.fabricmc:yarn:1.21.5+build.1")
+    modImplementation("net.fabricmc:fabric-loader:0.15.11")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:0.128.2+1.21.5")
+
+    implementation(project(":zmusic-core"))
+}
+
+jar {
+    dependsOn(":zmusic-core:jar")
+}

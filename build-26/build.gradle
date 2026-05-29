@@ -4,6 +4,7 @@ plugins {
 }
 
 ext {
+    modDescription = "Powerful Music System"
     zmusicPlayerVersion = project.hasProperty('zmusicPlayerVersion')
             ? project.property('zmusicPlayerVersion').toString()
             : (project.findProperty('zmusicPlayerVersion')?.toString() ?: '1.0.0-alpha.2')
@@ -143,9 +144,10 @@ subprojects {
 
     processResources {
         inputs.property "version", project.version
+        inputs.property "description", rootProject.modDescription
 
         filesMatching("fabric.mod.json") {
-            expand "version": project.version
+            expand "version": project.version, "description": rootProject.modDescription
         }
 
         filesMatching("META-INF/neoforge.mods.toml") {

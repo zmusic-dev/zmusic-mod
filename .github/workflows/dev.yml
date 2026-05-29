@@ -37,43 +37,50 @@ jobs:
             ${{ runner.os }}-gradle-
       - name: Build
         run: mise run build
-      - name: Build 26.1
+      - name: Build 26.1.2
         run: mise run build-26
-      # Fabric 26.1
-      - name: Upload Artifact (Fabric 26.1)
+      # Fabric 26.1.2
+      - name: Upload Artifact (Fabric 26.1.2)
         uses: actions/upload-artifact@v7
         with:
-          name: 'ZMusic Fabric 26.1'
+          name: 'ZMusic Fabric 26.1.2'
           path: |
-            zmusic-fabric/zmusic-fabric-26.1/build/libs/**.jar
-      # Fabric 1.21.8
-      - name: Upload Artifact (Fabric 1.21.8)
+            zmusic-fabric/zmusic-fabric-26.1.2/build/libs/**.jar
+      # Fabric 1.21.11
+      - name: Upload Artifact (Fabric 1.21.11)
         uses: actions/upload-artifact@v7
         with:
-          name: 'ZMusic Fabric 1.21.8'
+          name: 'ZMusic Fabric 1.21.11'
           path: |
-            zmusic-fabric/zmusic-fabric-1.21.8/build/libs/**.jar
-      # Fabric 1.21
-      - name: Upload Artifact (Fabric 1.21)
+            zmusic-fabric/zmusic-fabric-1.21.11/build/libs/**.jar
+      # Fabric 1.21.5
+      - name: Upload Artifact (Fabric 1.21.5)
         uses: actions/upload-artifact@v7
         with:
-          name: 'ZMusic Fabric 1.21'
+          name: 'ZMusic Fabric 1.21.5'
           path: |
-            zmusic-fabric/zmusic-fabric-1.21/build/libs/**.jar
-      # Fabric 1.20.5
-      - name: Upload Artifact (Fabric 1.20.5)
+            zmusic-fabric/zmusic-fabric-1.21.5/build/libs/**.jar
+      # Fabric 1.20.6
+      - name: Upload Artifact (Fabric 1.20.6)
         uses: actions/upload-artifact@v7
         with:
-          name: 'ZMusic Fabric 1.20.5'
+          name: 'ZMusic Fabric 1.20.6'
           path: |
-            zmusic-fabric/zmusic-fabric-1.20.5/build/libs/**.jar
-      # Fabric 1.20
-      - name: Upload Artifact (Fabric 1.20)
+            zmusic-fabric/zmusic-fabric-1.20.6/build/libs/**.jar
+      # Fabric 1.20.1
+      - name: Upload Artifact (Fabric 1.20.1)
         uses: actions/upload-artifact@v7
         with:
-          name: 'ZMusic Fabric 1.20'
+          name: 'ZMusic Fabric 1.20.1'
           path: |
-            zmusic-fabric/zmusic-fabric-1.20/build/libs/**.jar
+            zmusic-fabric/zmusic-fabric-1.20.1/build/libs/**.jar
+      # Fabric 1.20.4
+      - name: Upload Artifact (Fabric 1.20.4)
+        uses: actions/upload-artifact@v7
+        with:
+          name: 'ZMusic Fabric 1.20.4'
+          path: |
+            zmusic-fabric/zmusic-fabric-1.20.4/build/libs/**.jar
       # Fabric 1.19.4
       - name: Upload Artifact (Fabric 1.19.4)
         uses: actions/upload-artifact@v7
@@ -81,13 +88,6 @@ jobs:
           name: 'ZMusic Fabric 1.19.4'
           path: |
             zmusic-fabric/zmusic-fabric-1.19.4/build/libs/**.jar
-      # Fabric 1.19.3
-      - name: Upload Artifact (Fabric 1.19.3)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Fabric 1.19.3'
-          path: |
-            zmusic-fabric/zmusic-fabric-1.19.3/build/libs/**.jar
       # Fabric 1.19.2
       - name: Upload Artifact (Fabric 1.19.2)
         uses: actions/upload-artifact@v7
@@ -208,7 +208,7 @@ jobs:
         with:
           name: 'ZMusic NeoForge 26.1'
           path: |
-            zmusic-neoforge/zmusic-neoforge-26.1/build/libs/**.jar
+            zmusic-neoforge/zmusic-neoforge-26.1.2/build/libs/**.jar
       # NeoForge 1.21.1
       - name: Upload Artifact (NeoForge 1.21.1)
         uses: actions/upload-artifact@v7

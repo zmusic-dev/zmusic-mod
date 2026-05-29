@@ -3,12 +3,12 @@
   "id": "zmusic",
   "version": "${version}",
   "name": "ZMusic",
-  "description": "Powerful Music System",
+  "description": "${description}",
   "authors": [
     "ZhenXin"
   ],
   "contact": {
-    "homepage": "https://m.zplu.cc",
+    "homepage": "https://zmusic.zhenxin.me",
     "sources": "https://github.com/zmusic-dev/zmusic-mod",
     "issues": "https://github.com/zmusic-dev/zmusic-mod/issues",
     "discord": "https://discord.gg/twQgJNufYn"
@@ -24,7 +24,7 @@
     "zmusic.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.19.2",
+    "fabricloader": ">=0.18.4",
     "fabric-api": "*",
     "minecraft": ">=26.1 <26.2",
     "java": ">=25"
