@@ -121,6 +121,15 @@ subprojects {
 
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+        from {
+            configurations.runtimeClasspath.collect {
+                if (project.name != "zmusic-core" && it.name.contains("zmusic-core")) {
+                    it.isDirectory() ? it : zipTree(it)
+                }
+            }
+        }
+
         from("${rootDir}/../LICENSE")
 
         if (project.name == "zmusic-fabric-26.1" || project.name == "zmusic-neoforge-26.1") {
