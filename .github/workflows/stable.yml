@@ -60,7 +60,9 @@ jobs:
             zmusic-forge/zmusic-forge-1.20.1/build/libs/**.jar
             zmusic-neoforge/zmusic-neoforge-26.1.2/build/libs/**.jar
             zmusic-neoforge/zmusic-neoforge-1.20.4/build/libs/**.jar
-            zmusic-neoforge/zmusic-neoforge-1.21.1/build/libs/**.jar
+            zmusic-neoforge/zmusic-neoforge-1.20.6/build/libs/**.jar
+            zmusic-neoforge/zmusic-neoforge-1.21.10/build/libs/**.jar
+            zmusic-neoforge/zmusic-neoforge-1.21.11/build/libs/**.jar
       - name: Publish to CurseForge and Modrinth
         uses: Kir-Antipov/mc-publish@v3.3.0
         with:
@@ -95,7 +97,9 @@ jobs:
             zmusic-forge/zmusic-forge-1.20.1/build/libs/**.jar
             zmusic-neoforge/zmusic-neoforge-26.1.2/build/libs/**.jar
             zmusic-neoforge/zmusic-neoforge-1.20.4/build/libs/**.jar
-            zmusic-neoforge/zmusic-neoforge-1.21.1/build/libs/**.jar
+            zmusic-neoforge/zmusic-neoforge-1.20.6/build/libs/**.jar
+            zmusic-neoforge/zmusic-neoforge-1.21.10/build/libs/**.jar
+            zmusic-neoforge/zmusic-neoforge-1.21.11/build/libs/**.jar
           version-type: release
           retry-attempts: 3
       - name: Sync Release to Codeberg and CNB

@@ -14,13 +14,13 @@ authors = "ZhenXin"
 [[dependencies.zmusic]]
 modId = "neoforge"
 type = "required"
-versionRange = "[26.1,26.2)"
+versionRange = "[21.11,21.12)"
 ordering = "NONE"
 side = "CLIENT"
 
 [[dependencies.zmusic]]
 modId = "minecraft"
 type = "required"
-versionRange = "[26.1,26.2)"
+versionRange = "[1.21.11]"
 ordering = "NONE"
 side = "CLIENT"

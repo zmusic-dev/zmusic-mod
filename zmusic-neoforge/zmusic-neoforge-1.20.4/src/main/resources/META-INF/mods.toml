@@ -7,20 +7,20 @@ issueTrackerURL = "https://github.com/zmusic-dev/zmusic-mod/issues"
 modId = "zmusic"
 version = "${version}"
 displayName = "ZMusic"
-description = "Powerful Music System"
-displayURL = "https://m.zplu.cc"
+description = "${description}"
+displayURL = "https://zmusic.zhenxin.me"
 authors = "ZhenXin"
 
 [[dependencies.zmusic]]
 modId = "neoforge"
 mandatory = true
-versionRange = "[20.4,)"
+versionRange = "[20.4,20.5)"
 ordering = "NONE"
 side = "CLIENT"
 
 [[dependencies.zmusic]]
 modId = "minecraft"
 mandatory = true
-versionRange = "[1.20.4]"
+versionRange = "[1.20.2,1.20.5)"
 ordering = "NONE"
 side = "CLIENT"
