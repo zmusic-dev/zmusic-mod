@@ -181,6 +181,12 @@ subprojects {
         inputs.property "version", project.version
         inputs.property "description", rootProject.modDescription
 
+        if (isLeafPlatformProject(project)) {
+            from(project(":zmusic-core").sourceSets.main.resources) {
+                include("icon.png")
+            }
+        }
+
         filesMatching("fabric.mod.json") {
             expand "version": project.version, "description": rootProject.modDescription
         }

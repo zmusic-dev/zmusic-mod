@@ -28,5 +28,6 @@
     "fabric-api": "*",
     "minecraft": ">=1.21.6 <1.22",
     "java": ">=21"
-  }
+  },
+  "icon": "icon.png"
 }

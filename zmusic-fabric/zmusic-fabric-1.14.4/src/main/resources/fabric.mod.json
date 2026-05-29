@@ -28,5 +28,6 @@
     "fabric": "*",
     "minecraft": ">=1.14.3 <1.15",
     "java": ">=8"
-  }
+  },
+  "icon": "icon.png"
 }
