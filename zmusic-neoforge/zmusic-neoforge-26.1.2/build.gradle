@@ -1,5 +1,5 @@
 plugins {
-    id 'net.neoforged.gradle.userdev' version '7.1.27'
+    id 'net.neoforged.gradle.userdev' version '7.1.36'
 }
 
 java {
@@ -14,6 +14,40 @@ dependencies {
     implementation "net.neoforged:neoforge:26.1.2.67-beta"
 
     implementation project(":zmusic-core")
+}
+
+tasks.configureEach {
+    if (name == "neoFormSetup") {
+        doFirst {
+            def userdevJar = configurations.detachedConfiguration(
+                    dependencies.create("net.neoforged:neoforge:26.1.2.67-beta:userdev@jar")
+            ).singleFile
+            def neoFormCache = layout.buildDirectory.dir("tmp/.cache/expanded").get().asFile
+            if (!neoFormCache.exists()) {
+                return
+            }
+
+            def patched = false
+            neoFormCache.eachDirMatch(~/zip_.*/) { expandedZip ->
+                def configFile = new File(expandedZip, "config.json")
+                def patchesDir = new File(expandedZip, "patches")
+                def patchBundle = new File(expandedZip, "patches.lzma")
+                if (configFile.exists() && patchesDir.isDirectory() && !patchBundle.exists()) {
+                    copy {
+                        from(zipTree(userdevJar)) {
+                            include("patches.lzma")
+                        }
+                        into(expandedZip)
+                    }
+                    patched = true
+                }
+            }
+
+            if (!patched) {
+                logger.lifecycle("No NeoForm patch bundle workaround needed")
+            }
+        }
+    }
 }
 
 jar {
