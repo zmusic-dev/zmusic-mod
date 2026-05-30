@@ -35,8 +35,17 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties', 'mise.toml', 'scripts/gradle-26.sh') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
+      - name: Disk before build
+        run: |
+          df -h
+          du -sh ~/.gradle .gradle .gradle-26 build-26 zmusic-* 2>/dev/null || true
       - name: Build
         run: mise run build
+      - name: Disk after build
+        if: always()
+        run: |
+          df -h
+          du -sh ~/.gradle .gradle .gradle-26 build-26 zmusic-* 2>/dev/null || true
       - name: Build 26.1.2
         run: mise run build-26
       # Fabric 26.1.2
