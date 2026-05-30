@@ -11,7 +11,7 @@ java {
 }
 
 dependencies {
-    implementation "net.neoforged:neoforge:21.10.64"
+    implementation "net.neoforged:neoforge:21.10.63"
 
     implementation project(":zmusic-core")
 }
