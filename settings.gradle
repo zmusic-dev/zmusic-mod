@@ -53,6 +53,5 @@ include(
         "zmusic-neoforge",
         "zmusic-neoforge:zmusic-neoforge-1.20.4",
         "zmusic-neoforge:zmusic-neoforge-1.20.6",
-        "zmusic-neoforge:zmusic-neoforge-1.21.10",
-        "zmusic-neoforge:zmusic-neoforge-1.21.11"
+        "zmusic-neoforge:zmusic-neoforge-1.21.1"
 )
