@@ -202,6 +202,26 @@ jobs:
           name: ZMusic ${{ github.ref_name }}
           version: ${{ github.ref_name }}
           files: artifacts/**/*.jar
+          loaders: |
+            fabric
+            forge
+            neoforge
+          game-versions: |
+            1.12.2
+            1.14.4
+            1.15.2
+            1.16.5
+            1.17.1
+            1.18.2
+            1.19.2
+            1.19.4
+            1.20.1
+            1.20.4
+            1.20.6
+            1.21.1
+            1.21.5
+            1.21.11
+            26.1.2
           version-type: release
           retry-attempts: 3
       - name: Sync Release to Codeberg and CNB
