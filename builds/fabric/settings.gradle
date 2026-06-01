@@ -1,0 +1,42 @@
+pluginManagement {
+    repositories {
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = "zmusic-fabric"
+
+include("zmusic-core")
+project(":zmusic-core").projectDir = file("../../zmusic-core")
+
+def fabricProjects = [
+        "zmusic-fabric-1.14.4",
+        "zmusic-fabric-1.15.2",
+        "zmusic-fabric-1.16.5",
+        "zmusic-fabric-1.17.1",
+        "zmusic-fabric-1.18.2",
+        "zmusic-fabric-1.19.2",
+        "zmusic-fabric-1.19.4",
+        "zmusic-fabric-1.20.1",
+        "zmusic-fabric-1.20.4",
+        "zmusic-fabric-1.20.6",
+        "zmusic-fabric-1.21.5",
+        "zmusic-fabric-1.21.11",
+        "zmusic-fabric-26.1.2"
+]
+
+def selectedProject = providers.gradleProperty("zmusic.project").orNull
+def selectedProjects = selectedProject ? [selectedProject] : fabricProjects
+
+selectedProjects.each { projectName ->
+    if (!fabricProjects.contains(projectName)) {
+        throw new GradleException("Unknown Fabric project: ${projectName}")
+    }
+    include(projectName)
+    project(":${projectName}").projectDir = file("../../zmusic-fabric/${projectName}")
+}

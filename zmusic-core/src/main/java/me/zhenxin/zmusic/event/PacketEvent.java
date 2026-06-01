@@ -17,12 +17,12 @@ class PacketEvent {
     public static void onPlay(String data) {
         log.info("Play music from {}", data);
         ZMusic.getSoundManager().stop();
-        ZMusic.getPlayer().closePlayer();
-        ZMusic.getPlayer().setMusic(data);
+        ZMusic.getPlayer().stop();
+        ZMusic.getPlayer().play(data);
     }
 
     public static void onStop() {
-        ZMusic.getPlayer().closePlayer();
+        ZMusic.getPlayer().stop();
     }
 
     public static void onLyric(String data) {

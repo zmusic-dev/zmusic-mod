@@ -1,6 +1,7 @@
 package me.zhenxin.zmusic.event;
 
 import me.zhenxin.zmusic.ZMusic;
+import me.zhenxin.zmusic.ZMusicPlayer;
 import net.minecraft.util.SoundCategory;
 import net.minecraftforge.client.event.sound.PlaySoundEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -18,7 +19,7 @@ public class ForgeEvent {
 
     @SubscribeEvent
     public void onSound(final PlaySoundEvent e) {
-        if (!ZMusic.getPlayer().isPlay()) {
+        if (ZMusic.getPlayer().getState() != ZMusicPlayer.STATE_PLAYING) {
             return;
         }
         SoundCategory data = e.getSound().getCategory();
@@ -33,12 +34,12 @@ public class ForgeEvent {
 
     @SubscribeEvent
     public void onServerQuit(final FMLNetworkEvent.ClientDisconnectionFromServerEvent e) {
-        ZMusic.getPlayer().closePlayer();
+        ZMusic.getPlayer().stop();
     }
 
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        ZMusic.getPlayer().tick();
+        ZMusic.getPlayer().setVolume(ZMusic.getSoundManager().volume());
     }
 }

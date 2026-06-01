@@ -2,15 +2,15 @@
   "schemaVersion": 1,
   "id": "zmusic",
   "version": "${version}",
-  "name": "ZMusic Mod",
-  "description": "Powerful Music System",
+  "name": "ZMusic",
+  "description": "${description}",
   "authors": [
     "ZhenXin"
   ],
   "contact": {
-    "homepage": "https://m.zplu.cc",
-    "sources": "https://github.com/RealHeart/ZMusic-Mod",
-    "issues": "https://github.com/RealHeart/ZMusic-Mod/issues",
+    "homepage": "https://zmusic.zhenxin.me",
+    "sources": "https://github.com/zmusic-dev/zmusic-mod",
+    "issues": "https://github.com/zmusic-dev/zmusic-mod/issues",
     "discord": "https://discord.gg/twQgJNufYn"
   },
   "license": "GPL-3.0",
@@ -24,9 +24,10 @@
     "zmusic.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.14.14",
+    "fabricloader": ">=0.14.9",
     "fabric-api": "*",
-    "minecraft": "~1.19.2",
+    "minecraft": "1.19.2",
     "java": ">=17"
-  }
+  },
+  "icon": "icon.png"
 }

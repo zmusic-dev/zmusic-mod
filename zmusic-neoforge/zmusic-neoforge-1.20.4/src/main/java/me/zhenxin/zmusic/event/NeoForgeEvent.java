@@ -1,6 +1,7 @@
 package me.zhenxin.zmusic.event;
 
 import me.zhenxin.zmusic.ZMusic;
+import me.zhenxin.zmusic.ZMusicPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
@@ -17,7 +18,7 @@ public class NeoForgeEvent {
 
     @SubscribeEvent
     public void onSound(final PlaySoundEvent event) {
-        if (!ZMusic.getPlayer().isPlay() || event.getSound() == null) {
+        if (ZMusic.getPlayer().getState() != ZMusicPlayer.STATE_PLAYING || event.getSound() == null) {
             return;
         }
 
@@ -34,7 +35,7 @@ public class NeoForgeEvent {
     @SubscribeEvent
     public void onServerQuit(final ClientPlayerNetworkEvent.LoggingOut event) {
         try {
-            ZMusic.getPlayer().closePlayer();
+            ZMusic.getPlayer().stop();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -42,6 +43,6 @@ public class NeoForgeEvent {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        ZMusic.getPlayer().tick();
+        ZMusic.getPlayer().setVolume(ZMusic.getSoundManager().volume());
     }
 }

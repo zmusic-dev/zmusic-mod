@@ -1,13 +1,14 @@
 [
   {
     "modid": "zmusic",
-    "name": "ZMusic Mod",
-    "description": "Powerful Music System",
+    "name": "ZMusic",
+    "description": "${description}",
     "version": "${version}",
     "mcversion": "1.12.2",
-    "url": "https://m.zplu.cc",
+    "url": "https://zmusic.zhenxin.me",
     "authorList": [
       "ZhenXin"
-    ]
+    ],
+    "logoFile": "icon.png"
   }
 ]

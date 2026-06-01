@@ -1,0 +1,24 @@
+plugins {
+    id 'net.neoforged.gradle.userdev' version '7.1.36'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+dependencies {
+    implementation "net.neoforged:neoforge:20.6.139"
+
+    implementation project(":zmusic-core")
+}
+
+jar {
+    dependsOn(":zmusic-core:jar")
+    manifest {
+        attributes 'MixinConfigs': 'zmusic.mixins.json'
+    }
+}

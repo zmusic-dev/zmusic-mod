@@ -1,13 +1,14 @@
 modLoader = "javafml"
 loaderVersion = "[31,)"
 license = "GPL-3.0-only"
-issueTrackerURL = "https://github.com/RealHeart/ZMusic/issues"
+issueTrackerURL = "https://github.com/zmusic-dev/zmusic-mod/issues"
 [[mods]]
 modId = "zmusic"
 version = "${version}"
-displayName = "ZMusic Mod"
-description = "Powerful Music System"
-displayURL = "https://m.zplu.cc"
+displayName = "ZMusic"
+logoFile = "icon.png"
+description = "${description}"
+displayURL = "https://zmusic.zhenxin.me"
 authors = "ZhenXin"
 [[dependencies.zmusic]]
 modId = "forge"
@@ -18,6 +19,6 @@ side = "CLIENT"
 [[dependencies.zmusic]]
 modId = "minecraft"
 mandatory = true
-versionRange = "[1.15.2,1.16)"
+versionRange = "[1.15,1.16)"
 ordering = "NONE"
 side = "CLIENT"

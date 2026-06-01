@@ -1,6 +1,6 @@
 //https://github.com/FabricMC/fabric-loom/issues/1036
 plugins {
-    id("fabric-loom") version "1.11-SNAPSHOT" apply false
+    id("fabric-loom") version "1.13.3" apply false
 }
 
 def gitCommitHash = {
@@ -12,6 +12,100 @@ def gitCommitHash = {
     } catch (Exception e) {
         e.printStackTrace()
         return ""
+    }
+}
+
+// ---- zmusic-player native library ----
+
+ext {
+    modDescription = "Powerful Music System"
+    zmusicPlayerVersion = project.hasProperty('zmusicPlayerVersion')
+            ? project.property('zmusicPlayerVersion').toString()
+            : (project.findProperty('zmusicPlayerVersion')?.toString() ?: '1.0.0-alpha.2')
+    nativePlatforms = [
+        'x86_64-linux'   : [libName: 'libzmusic.so',    pattern: ~/zmusic-x86_64-linux-.*\.tar\.gz/],
+        'x86_64-windows' : [libName: 'zmusic.dll',      pattern: ~/zmusic-x86_64-windows-.*\.zip/],
+        'aarch64-macos'  : [libName: 'libzmusic.dylib', pattern: ~/zmusic-aarch64-macos-.*\.tar\.gz/],
+        'x86_64-macos'   : [libName: 'libzmusic.dylib', pattern: ~/zmusic-x86_64-macos-.*\.tar\.gz/]
+    ]
+}
+
+def isLeafPlatformProject(Project p) {
+    return p.name ==~ /zmusic-(fabric|forge|neoforge)-\d+.*/
+}
+
+def nativeBuildDir = layout.buildDirectory.dir("native")
+def nativeCacheDir = layout.projectDirectory.dir(".gradle/zmusic-player")
+
+tasks.register('downloadNativeLibs') {
+    inputs.property('zmusicPlayerVersion', zmusicPlayerVersion)
+    outputs.dir(nativeBuildDir)
+
+    doLast {
+        def outDir = nativeBuildDir.get().asFile
+        if (outDir.exists()) {
+            outDir.deleteDir()
+        }
+        outDir.mkdirs()
+
+        def apiUrl = "https://api.github.com/repos/zmusic-dev/zmusic-player/releases/tags/v${zmusicPlayerVersion}"
+        def conn = new URL(apiUrl).openConnection()
+        conn.setRequestProperty('Accept', 'application/vnd.github+json')
+        conn.setRequestProperty('User-Agent', 'ZMusic-Gradle-Build')
+
+        if (conn.responseCode != 200) {
+            throw new GradleException(
+                    "Failed to fetch zmusic-player release info (HTTP ${conn.responseCode}). "
+                            + "Check version '${zmusicPlayerVersion}' and GitHub API rate limits.")
+        }
+
+        def json = new groovy.json.JsonSlurper().parse(conn.inputStream as InputStream)
+        conn.disconnect()
+
+        nativePlatforms.each { platform, config ->
+            def libName = config.libName as String
+            def platformDir = new File(outDir, platform)
+            def libFile = new File(platformDir, libName)
+            platformDir.mkdirs()
+
+            def pattern = config.pattern
+            def asset = json.assets.find { it.name ==~ pattern }
+            if (!asset) {
+                throw new GradleException("No zmusic-player asset found for platform '${platform}'")
+            }
+
+            def downloadUrl = asset.browser_download_url as String
+            def versionCacheDir = new File(nativeCacheDir.asFile, "v${zmusicPlayerVersion}")
+            versionCacheDir.mkdirs()
+            def archiveFile = new File(versionCacheDir, asset.name as String)
+
+            if (!archiveFile.exists() || archiveFile.length() == 0) {
+                logger.lifecycle("Downloading zmusic-player native lib: ${asset.name}")
+                ant.get(src: downloadUrl, dest: archiveFile)
+            } else {
+                logger.lifecycle("Using cached zmusic-player native lib: ${asset.name}")
+            }
+
+            if (archiveFile.name.endsWith('.tar.gz') || archiveFile.name.endsWith('.tgz')) {
+                ant.untar(src: archiveFile, dest: platformDir, compression: 'gzip') {
+                    patternset { include(name: "**/${libName}") }
+                    mapper(type: 'flatten')
+                }
+            } else if (archiveFile.name.endsWith('.zip')) {
+                ant.unzip(src: archiveFile, dest: platformDir) {
+                    patternset { include(name: "**/${libName}") }
+                    mapper(type: 'flatten')
+                }
+            } else {
+                throw new GradleException("Unsupported zmusic-player archive: ${archiveFile.name}")
+            }
+
+            if (!libFile.exists() || libFile.length() == 0) {
+                throw new GradleException("Failed to extract ${platform}/${libName} from archive")
+            }
+
+            logger.lifecycle("Native library extracted: ${platform}/${libName} (${libFile.length()} bytes)")
+        }
     }
 }
 
@@ -33,7 +127,7 @@ subprojects {
     apply plugin: 'java-library'
 
     group = "me.zhenxin"
-    version = "3.6.0"
+    version = "3.7.0"
 
     dependencies {
         compileOnly("org.projectlombok:lombok:1.18.46")
@@ -62,7 +156,7 @@ subprojects {
                         "Specification-Title"     : "zmusic",
                         "Specification-Vendor"    : "ZhenXin",
                         "Specification-Version"   : "1",
-                        "Implementation-Title"    : "ZMusic Mod",
+                        "Implementation-Title"    : "ZMusic",
                         "Implementation-Version"  : project.version,
                         "Implementation-Vendor"   : "ZhenXin",
                         "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
@@ -71,23 +165,42 @@ subprojects {
         }
     }
 
+    // ---- Native library packaging (leaf platform projects only) ----
+    if (isLeafPlatformProject(project)) {
+        jar {
+            dependsOn(rootProject.tasks.named('downloadNativeLibs'))
+            from(nativeBuildDir) {
+                include('*/libzmusic.so', '*/zmusic.dll', '*/libzmusic.dylib')
+                into('META-INF/native')
+            }
+        }
+
+    }
+
     processResources {
         inputs.property "version", project.version
+        inputs.property "description", rootProject.modDescription
+
+        if (isLeafPlatformProject(project)) {
+            from(project(":zmusic-core").sourceSets.main.resources) {
+                include("icon.png")
+            }
+        }
 
         filesMatching("fabric.mod.json") {
-            expand "version": project.version
+            expand "version": project.version, "description": rootProject.modDescription
         }
 
         filesMatching("META-INF/mods.toml") {
-            expand "version": project.version
+            expand "version": project.version, "description": rootProject.modDescription
         }
 
         filesMatching("META-INF/neoforge.mods.toml") {
-            expand "version": project.version
+            expand "version": project.version, "description": rootProject.modDescription
         }
 
         filesMatching("mcmod.info") {
-            expand "version": project.version
+            expand "version": project.version, "description": rootProject.modDescription
         }
     }
 

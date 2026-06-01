@@ -17,17 +17,17 @@ pluginManagement {
     }
 }
 
-rootProject.name = "ZMusic-Mod"
+rootProject.name = "zmusic-mod"
 
 include("zmusic-core")
 include(
         "zmusic-fabric",
-        "zmusic-fabric:zmusic-fabric-1.21.8",
-        "zmusic-fabric:zmusic-fabric-1.21",
-        "zmusic-fabric:zmusic-fabric-1.20.5",
-        "zmusic-fabric:zmusic-fabric-1.20",
+        "zmusic-fabric:zmusic-fabric-1.21.11",
+        "zmusic-fabric:zmusic-fabric-1.21.5",
+        "zmusic-fabric:zmusic-fabric-1.20.6",
+        "zmusic-fabric:zmusic-fabric-1.20.4",
+        "zmusic-fabric:zmusic-fabric-1.20.1",
         "zmusic-fabric:zmusic-fabric-1.19.4",
-        "zmusic-fabric:zmusic-fabric-1.19.3",
         "zmusic-fabric:zmusic-fabric-1.19.2",
         "zmusic-fabric:zmusic-fabric-1.18.2",
         "zmusic-fabric:zmusic-fabric-1.17.1",
@@ -38,9 +38,9 @@ include(
 
 include(
         "zmusic-forge",
-        "zmusic-forge:zmusic-forge-1.20",
+        "zmusic-forge:zmusic-forge-1.20.4",
+        "zmusic-forge:zmusic-forge-1.20.1",
         "zmusic-forge:zmusic-forge-1.19.4",
-        "zmusic-forge:zmusic-forge-1.19.3",
         "zmusic-forge:zmusic-forge-1.19.2",
         "zmusic-forge:zmusic-forge-1.18.2",
         "zmusic-forge:zmusic-forge-1.17.1",
@@ -53,5 +53,6 @@ include(
 include(
         "zmusic-neoforge",
         "zmusic-neoforge:zmusic-neoforge-1.20.4",
+        "zmusic-neoforge:zmusic-neoforge-1.20.6",
         "zmusic-neoforge:zmusic-neoforge-1.21.1"
 )

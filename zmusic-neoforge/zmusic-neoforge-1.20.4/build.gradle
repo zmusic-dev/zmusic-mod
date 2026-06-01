@@ -1,5 +1,5 @@
 plugins {
-    id 'net.neoforged.gradle.userdev' version '7.1.25'
+    id 'net.neoforged.gradle.userdev' version '7.1.36'
 }
 
 java {
@@ -11,7 +11,7 @@ java {
 }
 
 dependencies {
-    implementation "net.neoforged:neoforge:20.4.237"
+    implementation "net.neoforged:neoforge:20.4.251"
 
     implementation project(":zmusic-core")
 }

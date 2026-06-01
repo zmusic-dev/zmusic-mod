@@ -12,6 +12,6 @@ public class Tick {
 
     @Inject(method = "tick", at = @At("TAIL"))
     public void tick(CallbackInfo info) {
-        ZMusic.getPlayer().tick();
+        ZMusic.getPlayer().setVolume(ZMusic.getSoundManager().volume());
     }
 }
