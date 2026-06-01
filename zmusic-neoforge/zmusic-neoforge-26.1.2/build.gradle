@@ -16,6 +16,34 @@ dependencies {
     implementation project(":zmusic-core")
 }
 
+tasks.configureEach {
+    if (name == "neoFormSetup") {
+        doFirst {
+            def userdevJar = configurations.detachedConfiguration(
+                    dependencies.create("net.neoforged:neoforge:26.1.2.70-beta:userdev@jar")
+            ).singleFile
+            def expandedCache = layout.buildDirectory.dir("tmp/.cache/expanded").get().asFile
+            if (!expandedCache.exists()) {
+                return
+            }
+
+            expandedCache.eachDirMatch(~/zip_.*/) { expandedZip ->
+                def configFile = new File(expandedZip, "config.json")
+                def patchesDir = new File(expandedZip, "patches")
+                def patchBundle = new File(expandedZip, "patches.lzma")
+                if (configFile.exists() && patchesDir.isDirectory() && !patchBundle.exists()) {
+                    copy {
+                        from(zipTree(userdevJar)) {
+                            include("patches.lzma")
+                        }
+                        into(expandedZip)
+                    }
+                }
+            }
+        }
+    }
+}
+
 jar {
     dependsOn(":zmusic-core:jar")
     manifest {
