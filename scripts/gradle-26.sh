@@ -23,7 +23,7 @@ if [[ ! -f "${PATCHED_NEOFORM_ZIP}" ]]; then
   mkdir -p "${PATCHED_NEOFORM_DIR}"
   curl -fsSL "https://maven.neoforged.net/releases/net/neoforged/neoform/26.1.2-1/neoform-26.1.2-1.zip" \
     -o "${WORK_DIR}/neoform.zip"
-  curl -fsSL "https://maven.neoforged.net/releases/net/neoforged/neoforge/26.1.2.67-beta/neoforge-26.1.2.67-beta-userdev.jar" \
+  curl -fsSL "https://maven.neoforged.net/releases/net/neoforged/neoforge/26.1.2.70-beta/neoforge-26.1.2.70-beta-userdev.jar" \
     -o "${WORK_DIR}/userdev.jar"
 
   mkdir -p "${WORK_DIR}/neoform"
