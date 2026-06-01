@@ -11,6 +11,38 @@ ext {
     ]
 }
 
+def ensureValidZip(File file) {
+    if (!file.exists() || file.length() == 0) {
+        return false
+    }
+    try {
+        new java.util.zip.ZipFile(file).close()
+        return true
+    } catch (java.util.zip.ZipException ignored) {
+        return false
+    }
+}
+
+def repairLegacyForgeToolCache() {
+    def specialSource = new File(
+            gradle.gradleUserHomeDir,
+            "caches/minecraftforge/forgegradle/mavenizer/caches/maven/mcp-tools/net/md-5/SpecialSource/1.8.3/SpecialSource-1.8.3-shaded.jar"
+    )
+    if (ensureValidZip(specialSource)) {
+        return
+    }
+
+    specialSource.parentFile.mkdirs()
+    logger.lifecycle("Repairing Forge Mavenizer cache: ${specialSource.name}")
+    ant.get(
+            src: "https://repo.maven.apache.org/maven2/net/md-5/SpecialSource/1.8.3/SpecialSource-1.8.3-shaded.jar",
+            dest: specialSource
+    )
+    new File(specialSource.parentFile, "${specialSource.name}.sha1").text = "54cae54ef5426ef16660eb8bb3bf95d05be3fecd"
+}
+
+repairLegacyForgeToolCache()
+
 def nativeBuildDir = layout.buildDirectory.dir("native")
 def nativeCacheDir = layout.projectDirectory.dir("../../.gradle/zmusic-player")
 
@@ -33,6 +65,10 @@ tasks.register('downloadNativeLibs') {
         def conn = new URL(apiUrl).openConnection()
         conn.setRequestProperty('Accept', 'application/vnd.github+json')
         conn.setRequestProperty('User-Agent', 'ZMusic-Gradle-Build')
+        def githubToken = System.getenv('GITHUB_TOKEN') ?: System.getenv('MISE_GITHUB_TOKEN')
+        if (githubToken) {
+            conn.setRequestProperty('Authorization', "Bearer ${githubToken}")
+        }
 
         if (conn.responseCode != 200) {
             throw new GradleException(
@@ -122,12 +158,8 @@ subprojects {
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
-        from {
-            configurations.runtimeClasspath.collect {
-                if (project.name != "zmusic-core" && it.name.contains("zmusic-core")) {
-                    it.isDirectory() ? it : zipTree(it)
-                }
-            }
+        if (project.name != "zmusic-core") {
+            from(project(":zmusic-core").sourceSets.main.output)
         }
 
         from("${rootDir}/../../LICENSE")

@@ -37,6 +37,10 @@ tasks.register('downloadNativeLibs') {
         def conn = new URL(apiUrl).openConnection()
         conn.setRequestProperty('Accept', 'application/vnd.github+json')
         conn.setRequestProperty('User-Agent', 'ZMusic-Gradle-Build')
+        def githubToken = System.getenv('GITHUB_TOKEN') ?: System.getenv('MISE_GITHUB_TOKEN')
+        if (githubToken) {
+            conn.setRequestProperty('Authorization', "Bearer ${githubToken}")
+        }
 
         if (conn.responseCode != 200) {
             throw new GradleException(
@@ -122,12 +126,8 @@ subprojects {
     jar {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
-        from {
-            configurations.runtimeClasspath.collect {
-                if (project.name != "zmusic-core" && it.name.contains("zmusic-core")) {
-                    it.isDirectory() ? it : zipTree(it)
-                }
-            }
+        if (project.name != "zmusic-core") {
+            from(project(":zmusic-core").sourceSets.main.output)
         }
 
         from("${rootDir}/../../LICENSE")
