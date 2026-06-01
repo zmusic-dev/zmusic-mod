@@ -95,10 +95,6 @@ allprojects {
             url = 'https://maven.fabricmc.net/'
         }
         maven {
-            name = 'PatchedNeoForm'
-            url = rootProject.layout.projectDirectory.dir("../.gradle-26/patched-maven")
-        }
-        maven {
             name = 'NeoForge'
             url = 'https://maven.neoforged.net/releases/'
         }
