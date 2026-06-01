@@ -21,16 +21,12 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-            ~/.gradle/caches/forge_gradle
-            .gradle-26
             .gradle/zmusic-player
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties', 'mise.toml', 'scripts/gradle-26.sh') }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties', 'mise.toml') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
       - name: Build
         run: mise run build
-      - name: Build 26.1.2
-        run: mise run build-26
       - name: Release
         id: release
         uses: softprops/action-gh-release@v3
@@ -58,6 +54,7 @@ jobs:
             zmusic-forge/zmusic-forge-1.19.2/build/libs/**.jar
             zmusic-forge/zmusic-forge-1.19.4/build/libs/**.jar
             zmusic-forge/zmusic-forge-1.20.1/build/libs/**.jar
+            zmusic-forge/zmusic-forge-1.20.4/build/libs/**.jar
             zmusic-neoforge/zmusic-neoforge-26.1.2/build/libs/**.jar
             zmusic-neoforge/zmusic-neoforge-1.20.4/build/libs/**.jar
             zmusic-neoforge/zmusic-neoforge-1.20.6/build/libs/**.jar
@@ -94,6 +91,7 @@ jobs:
             zmusic-forge/zmusic-forge-1.19.2/build/libs/**.jar
             zmusic-forge/zmusic-forge-1.19.4/build/libs/**.jar
             zmusic-forge/zmusic-forge-1.20.1/build/libs/**.jar
+            zmusic-forge/zmusic-forge-1.20.4/build/libs/**.jar
             zmusic-neoforge/zmusic-neoforge-26.1.2/build/libs/**.jar
             zmusic-neoforge/zmusic-neoforge-1.20.4/build/libs/**.jar
             zmusic-neoforge/zmusic-neoforge-1.20.6/build/libs/**.jar

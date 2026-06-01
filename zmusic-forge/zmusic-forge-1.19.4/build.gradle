@@ -1,5 +1,6 @@
 plugins {
-    id 'net.minecraftforge.gradle' version '6.0.53'
+    id 'net.minecraftforge.gradle' version '7.0.25'
+    id 'net.minecraftforge.renamer' version '1.1.0'
 }
 
 java {
@@ -12,8 +13,7 @@ minecraft {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.19.4-45.0.9'
-
+    implementation minecraft.dependency('net.minecraftforge:forge:1.19.4-45.0.9')
     implementation project(":zmusic-core")
 }
 

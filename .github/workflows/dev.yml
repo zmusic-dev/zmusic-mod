@@ -8,7 +8,7 @@ on:
       - "**.gradle"
       - "**.json"
       - "**.toml"
-      - "scripts/gradle-26.sh"
+      - "gradle/wrapper/gradle-wrapper.properties"
       - ".github/workflows/dev.yml"
     branches:
       - "dev"
@@ -19,6 +19,118 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - loader: Fabric
+            build-dir: builds/fabric
+            project: zmusic-fabric-26.1.2
+            artifact-path: zmusic-fabric/zmusic-fabric-26.1.2/build/libs/**.jar
+          - loader: Fabric
+            build-dir: builds/fabric
+            project: zmusic-fabric-1.21.11
+            artifact-path: zmusic-fabric/zmusic-fabric-1.21.11/build/libs/**.jar
+          - loader: Fabric
+            build-dir: builds/fabric
+            project: zmusic-fabric-1.21.5
+            artifact-path: zmusic-fabric/zmusic-fabric-1.21.5/build/libs/**.jar
+          - loader: Fabric
+            build-dir: builds/fabric
+            project: zmusic-fabric-1.20.6
+            artifact-path: zmusic-fabric/zmusic-fabric-1.20.6/build/libs/**.jar
+          - loader: Fabric
+            build-dir: builds/fabric
+            project: zmusic-fabric-1.20.4
+            artifact-path: zmusic-fabric/zmusic-fabric-1.20.4/build/libs/**.jar
+          - loader: Fabric
+            build-dir: builds/fabric
+            project: zmusic-fabric-1.20.1
+            artifact-path: zmusic-fabric/zmusic-fabric-1.20.1/build/libs/**.jar
+          - loader: Fabric
+            build-dir: builds/fabric
+            project: zmusic-fabric-1.19.4
+            artifact-path: zmusic-fabric/zmusic-fabric-1.19.4/build/libs/**.jar
+          - loader: Fabric
+            build-dir: builds/fabric
+            project: zmusic-fabric-1.19.2
+            artifact-path: zmusic-fabric/zmusic-fabric-1.19.2/build/libs/**.jar
+          - loader: Fabric
+            build-dir: builds/fabric
+            project: zmusic-fabric-1.18.2
+            artifact-path: zmusic-fabric/zmusic-fabric-1.18.2/build/libs/**.jar
+          - loader: Fabric
+            build-dir: builds/fabric
+            project: zmusic-fabric-1.17.1
+            artifact-path: zmusic-fabric/zmusic-fabric-1.17.1/build/libs/**.jar
+          - loader: Fabric
+            build-dir: builds/fabric
+            project: zmusic-fabric-1.16.5
+            artifact-path: zmusic-fabric/zmusic-fabric-1.16.5/build/libs/**.jar
+          - loader: Fabric
+            build-dir: builds/fabric
+            project: zmusic-fabric-1.15.2
+            artifact-path: zmusic-fabric/zmusic-fabric-1.15.2/build/libs/**.jar
+          - loader: Fabric
+            build-dir: builds/fabric
+            project: zmusic-fabric-1.14.4
+            artifact-path: zmusic-fabric/zmusic-fabric-1.14.4/build/libs/**.jar
+          - loader: Forge
+            build-dir: builds/forge
+            project: zmusic-forge-1.20.4
+            artifact-path: zmusic-forge/zmusic-forge-1.20.4/build/libs/**.jar
+          - loader: Forge
+            build-dir: builds/forge
+            project: zmusic-forge-1.20.1
+            artifact-path: zmusic-forge/zmusic-forge-1.20.1/build/libs/**.jar
+          - loader: Forge
+            build-dir: builds/forge
+            project: zmusic-forge-1.19.4
+            artifact-path: zmusic-forge/zmusic-forge-1.19.4/build/libs/**.jar
+          - loader: Forge
+            build-dir: builds/forge
+            project: zmusic-forge-1.19.2
+            artifact-path: zmusic-forge/zmusic-forge-1.19.2/build/libs/**.jar
+          - loader: Forge
+            build-dir: builds/forge
+            project: zmusic-forge-1.18.2
+            artifact-path: zmusic-forge/zmusic-forge-1.18.2/build/libs/**.jar
+          - loader: Forge
+            build-dir: builds/forge
+            project: zmusic-forge-1.17.1
+            artifact-path: zmusic-forge/zmusic-forge-1.17.1/build/libs/**.jar
+          - loader: Forge
+            build-dir: builds/forge
+            project: zmusic-forge-1.16.5
+            artifact-path: zmusic-forge/zmusic-forge-1.16.5/build/libs/**.jar
+          - loader: Forge
+            build-dir: builds/forge
+            project: zmusic-forge-1.15.2
+            artifact-path: zmusic-forge/zmusic-forge-1.15.2/build/libs/**.jar
+          - loader: Forge
+            build-dir: builds/forge
+            project: zmusic-forge-1.14.4
+            artifact-path: zmusic-forge/zmusic-forge-1.14.4/build/libs/**.jar
+          - loader: Forge
+            build-dir: builds/forge
+            project: zmusic-forge-1.12.2
+            artifact-path: zmusic-forge/zmusic-forge-1.12.2/build/libs/**.jar
+          - loader: NeoForge
+            build-dir: builds/neoforge
+            project: zmusic-neoforge-26.1.2
+            artifact-path: zmusic-neoforge/zmusic-neoforge-26.1.2/build/libs/**.jar
+          - loader: NeoForge
+            build-dir: builds/neoforge
+            project: zmusic-neoforge-1.21.1
+            artifact-path: zmusic-neoforge/zmusic-neoforge-1.21.1/build/libs/**.jar
+          - loader: NeoForge
+            build-dir: builds/neoforge
+            project: zmusic-neoforge-1.20.6
+            artifact-path: zmusic-neoforge/zmusic-neoforge-1.20.6/build/libs/**.jar
+          - loader: NeoForge
+            build-dir: builds/neoforge
+            project: zmusic-neoforge-1.20.4
+            artifact-path: zmusic-neoforge/zmusic-neoforge-1.20.4/build/libs/**.jar
     steps:
       - uses: actions/checkout@v6
       - name: Setup mise
@@ -29,206 +141,18 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-            ~/.gradle/caches/forge_gradle
-            .gradle-26
             .gradle/zmusic-player
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties', 'mise.toml', 'scripts/gradle-26.sh') }}
+          key: ${{ runner.os }}-gradle-${{ matrix.project }}-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties', 'mise.toml') }}
           restore-keys: |
+            ${{ runner.os }}-gradle-${{ matrix.project }}-
             ${{ runner.os }}-gradle-
-      - name: Disk before build
+      - name: Build ${{ matrix.loader }} ${{ matrix.project }}
         run: |
-          df -h
-          du -sh ~/.gradle .gradle .gradle-26 build-26 zmusic-* 2>/dev/null || true
-      - name: Build
-        run: mise run build
-      - name: Disk after build
-        if: always()
-        run: |
-          df -h
-          du -sh ~/.gradle .gradle .gradle-26 build-26 zmusic-* 2>/dev/null || true
-      - name: Build 26.1.2
-        run: mise run build-26
-      # Fabric 26.1.2
-      - name: Upload Artifact (Fabric 26.1.2)
+          ./gradlew --project-dir "${{ matrix.build-dir }}" ":${{ matrix.project }}:jar" --no-daemon \
+            -Pzmusic.project="${{ matrix.project }}" \
+            -Porg.gradle.java.installations.paths="$(mise where java@temurin-8),$(mise where java@temurin-16),$(mise where java@temurin-17),$(mise where java@temurin-21),$(mise where java@temurin-25)"
+      - name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: 'ZMusic Fabric 26.1.2'
-          path: |
-            zmusic-fabric/zmusic-fabric-26.1.2/build/libs/**.jar
-      # Fabric 1.21.11
-      - name: Upload Artifact (Fabric 1.21.11)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Fabric 1.21.11'
-          path: |
-            zmusic-fabric/zmusic-fabric-1.21.11/build/libs/**.jar
-      # Fabric 1.21.5
-      - name: Upload Artifact (Fabric 1.21.5)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Fabric 1.21.5'
-          path: |
-            zmusic-fabric/zmusic-fabric-1.21.5/build/libs/**.jar
-      # Fabric 1.20.6
-      - name: Upload Artifact (Fabric 1.20.6)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Fabric 1.20.6'
-          path: |
-            zmusic-fabric/zmusic-fabric-1.20.6/build/libs/**.jar
-      # Fabric 1.20.1
-      - name: Upload Artifact (Fabric 1.20.1)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Fabric 1.20.1'
-          path: |
-            zmusic-fabric/zmusic-fabric-1.20.1/build/libs/**.jar
-      # Fabric 1.20.4
-      - name: Upload Artifact (Fabric 1.20.4)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Fabric 1.20.4'
-          path: |
-            zmusic-fabric/zmusic-fabric-1.20.4/build/libs/**.jar
-      # Fabric 1.19.4
-      - name: Upload Artifact (Fabric 1.19.4)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Fabric 1.19.4'
-          path: |
-            zmusic-fabric/zmusic-fabric-1.19.4/build/libs/**.jar
-      # Fabric 1.19.2
-      - name: Upload Artifact (Fabric 1.19.2)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Fabric 1.19.2'
-          path: |
-            zmusic-fabric/zmusic-fabric-1.19.2/build/libs/**.jar
-      # Fabric 1.18.2
-      - name: Upload Artifact (Fabric 1.18.2)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Fabric 1.18.2'
-          path: |
-            zmusic-fabric/zmusic-fabric-1.18.2/build/libs/**.jar
-      # Fabric 1.17.1
-      - name: Upload Artifact (Fabric 1.17.1)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Fabric 1.17.1'
-          path: |
-            zmusic-fabric/zmusic-fabric-1.17.1/build/libs/**.jar
-      # Fabric 1.16.5
-      - name: Upload Artifact (Fabric 1.16.5)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Fabric 1.16.5'
-          path: |
-            zmusic-fabric/zmusic-fabric-1.16.5/build/libs/**.jar
-      # Fabric 1.15.2
-      - name: Upload Artifact (Fabric 1.15.2)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Fabric 1.15.2'
-          path: |
-            zmusic-fabric/zmusic-fabric-1.15.2/build/libs/**.jar
-      # Fabric 1.14.4
-      - name: Upload Artifact (Fabric 1.14.4)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Fabric 1.14.4'
-          path: |
-            zmusic-fabric/zmusic-fabric-1.14.4/build/libs/**.jar
-
-      # Forge 1.20.1
-      - name: Upload Artifact (Forge 1.20.1)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Forge 1.20.1'
-          path: |
-            zmusic-forge/zmusic-forge-1.20.1/build/libs/**.jar
-      # Forge 1.19.4
-      - name: Upload Artifact (Forge 1.19.4)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Forge 1.19.4'
-          path: |
-            zmusic-forge/zmusic-forge-1.19.4/build/libs/**.jar
-      # Forge 1.19.2
-      - name: Upload Artifact (Forge 1.19.2)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Forge 1.19.2'
-          path: |
-            zmusic-forge/zmusic-forge-1.19.2/build/libs/**.jar
-      # Forge 1.18.2
-      - name: Upload Artifact (Forge 1.18.2)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Forge 1.18.2'
-          path: |
-            zmusic-forge/zmusic-forge-1.18.2/build/libs/**.jar
-      # Forge 1.17.1
-      - name: Upload Artifact (Forge 1.17.1)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Forge 1.17.1'
-          path: |
-            zmusic-forge/zmusic-forge-1.17.1/build/libs/**.jar
-      # Forge 1.16.5
-      - name: Upload Artifact (Forge 1.16.5)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Forge 1.16.5'
-          path: |
-            zmusic-forge/zmusic-forge-1.16.5/build/libs/**.jar
-      # Forge 1.15.2
-      - name: Upload Artifact (Forge 1.15.2)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Forge 1.15.2'
-          path: |
-            zmusic-forge/zmusic-forge-1.15.2/build/libs/**.jar
-      # Forge 1.14.4
-      - name: Upload Artifact (Forge 1.14.4)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Forge 1.14.4'
-          path: |
-            zmusic-forge/zmusic-forge-1.14.4/build/libs/**.jar
-      # Forge 1.12.2
-      - name: Upload Artifact (Forge 1.12.2)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic Forge 1.12.2'
-          path: |
-            zmusic-forge/zmusic-forge-1.12.2/build/libs/**.jar
-
-      # NeoForge 26.1.2
-      - name: Upload Artifact (NeoForge 26.1.2)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic NeoForge 26.1.2'
-          path: |
-            zmusic-neoforge/zmusic-neoforge-26.1.2/build/libs/**.jar
-      # NeoForge 1.21.1
-      - name: Upload Artifact (NeoForge 1.21.1)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic NeoForge 1.21.1'
-          path: |
-            zmusic-neoforge/zmusic-neoforge-1.21.1/build/libs/**.jar
-      # NeoForge 1.20.6
-      - name: Upload Artifact (NeoForge 1.20.6)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic NeoForge 1.20.6'
-          path: |
-            zmusic-neoforge/zmusic-neoforge-1.20.6/build/libs/**.jar
-      # NeoForge 1.20.4
-      - name: Upload Artifact (NeoForge 1.20.4)
-        uses: actions/upload-artifact@v7
-        with:
-          name: 'ZMusic NeoForge 1.20.4'
-          path: |
-            zmusic-neoforge/zmusic-neoforge-1.20.4/build/libs/**.jar
+          name: ZMusic ${{ matrix.loader }} ${{ matrix.project }}
+          path: ${{ matrix.artifact-path }}

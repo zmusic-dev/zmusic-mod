@@ -2,17 +2,36 @@
 java = ["temurin-25", "temurin-21", "temurin-17", "temurin-16", "temurin-8"]
 
 [tasks.clean]
-run = "./gradlew clean --no-daemon"
+run = '''
+./gradlew --project-dir builds/fabric clean --no-daemon
+./gradlew --project-dir builds/forge clean --no-daemon
+./gradlew --project-dir builds/neoforge clean --no-daemon
+'''
 
 [tasks.build]
 run = '''
-./gradlew clean build --no-daemon \
-  -Dnet.minecraftforge.gradle.check.certs=false \
+./gradlew --project-dir builds/fabric clean build --no-daemon \
+  -Porg.gradle.java.installations.paths="$(mise where java@temurin-8),$(mise where java@temurin-16),$(mise where java@temurin-17),$(mise where java@temurin-21),$(mise where java@temurin-25)"
+./gradlew --project-dir builds/forge clean build --no-daemon \
+  -Porg.gradle.java.installations.paths="$(mise where java@temurin-8),$(mise where java@temurin-16),$(mise where java@temurin-17),$(mise where java@temurin-21),$(mise where java@temurin-25)"
+./gradlew --project-dir builds/neoforge clean build --no-daemon \
   -Porg.gradle.java.installations.paths="$(mise where java@temurin-8),$(mise where java@temurin-16),$(mise where java@temurin-17),$(mise where java@temurin-21),$(mise where java@temurin-25)"
 '''
 
-[tasks.build-26]
+[tasks."build:fabric"]
 run = '''
-scripts/gradle-26.sh clean :zmusic-fabric-26.1.2:jar :zmusic-neoforge-26.1.2:jar --no-daemon \
-  -Porg.gradle.java.installations.paths="$(mise where java@temurin-25)"
+./gradlew --project-dir builds/fabric clean build --no-daemon \
+  -Porg.gradle.java.installations.paths="$(mise where java@temurin-8),$(mise where java@temurin-16),$(mise where java@temurin-17),$(mise where java@temurin-21),$(mise where java@temurin-25)"
+'''
+
+[tasks."build:forge"]
+run = '''
+./gradlew --project-dir builds/forge clean build --no-daemon \
+  -Porg.gradle.java.installations.paths="$(mise where java@temurin-8),$(mise where java@temurin-16),$(mise where java@temurin-17),$(mise where java@temurin-21),$(mise where java@temurin-25)"
+'''
+
+[tasks."build:neoforge"]
+run = '''
+./gradlew --project-dir builds/neoforge clean build --no-daemon \
+  -Porg.gradle.java.installations.paths="$(mise where java@temurin-8),$(mise where java@temurin-16),$(mise where java@temurin-17),$(mise where java@temurin-21),$(mise where java@temurin-25)"
 '''

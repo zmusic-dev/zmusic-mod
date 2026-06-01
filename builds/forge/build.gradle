@@ -1,8 +1,3 @@
-plugins {
-    id("net.fabricmc.fabric-loom") version "1.16.2" apply false
-    id("net.neoforged.gradle.userdev") version "7.1.36" apply false
-}
-
 ext {
     modDescription = "Powerful Music System"
     zmusicPlayerVersion = project.hasProperty('zmusicPlayerVersion')
@@ -17,7 +12,11 @@ ext {
 }
 
 def nativeBuildDir = layout.buildDirectory.dir("native")
-def nativeCacheDir = layout.projectDirectory.dir("../.gradle/zmusic-player")
+def nativeCacheDir = layout.projectDirectory.dir("../../.gradle/zmusic-player")
+
+def isForgeProject(Project p) {
+    return p.name ==~ /zmusic-forge-\d+.*/
+}
 
 tasks.register('downloadNativeLibs') {
     inputs.property('zmusicPlayerVersion', zmusicPlayerVersion)
@@ -91,14 +90,6 @@ allprojects {
     repositories {
         mavenCentral()
         maven {
-            name = 'Fabric'
-            url = 'https://maven.fabricmc.net/'
-        }
-        maven {
-            name = 'NeoForge'
-            url = 'https://maven.neoforged.net/releases/'
-        }
-        maven {
             name = 'Jitpack'
             url = 'https://jitpack.io'
         }
@@ -114,6 +105,14 @@ subprojects {
 
     group = "me.zhenxin"
     version = "3.6.0"
+
+    pluginManager.withPlugin("net.minecraftforge.gradle") {
+        repositories {
+            project.minecraft.mavenizer(it)
+            maven project.fg.forgeMaven
+            maven project.fg.minecraftLibsMaven
+        }
+    }
 
     dependencies {
         compileOnly("org.projectlombok:lombok:1.18.46")
@@ -131,9 +130,21 @@ subprojects {
             }
         }
 
-        from("${rootDir}/../LICENSE")
+        from("${rootDir}/../../LICENSE")
 
-        if (project.name == "zmusic-fabric-26.1.2" || project.name == "zmusic-neoforge-26.1.2") {
+        if (isForgeProject(project)) {
+            manifest {
+                attributes([
+                        "Specification-Title"     : "zmusic",
+                        "Specification-Vendor"    : "ZhenXin",
+                        "Specification-Version"   : "1",
+                        "Implementation-Title"    : "ZMusic",
+                        "Implementation-Version"  : project.version,
+                        "Implementation-Vendor"   : "ZhenXin",
+                        "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                ])
+            }
+
             dependsOn(rootProject.tasks.named('downloadNativeLibs'))
             from(nativeBuildDir) {
                 include('*/libzmusic.so', '*/zmusic.dll', '*/libzmusic.dylib')
@@ -146,17 +157,13 @@ subprojects {
         inputs.property "version", project.version
         inputs.property "description", rootProject.modDescription
 
-        if (project.name == "zmusic-fabric-26.1.2" || project.name == "zmusic-neoforge-26.1.2") {
+        if (isForgeProject(project)) {
             from(project(":zmusic-core").sourceSets.main.resources) {
                 include("icon.png")
             }
         }
 
-        filesMatching("fabric.mod.json") {
-            expand "version": project.version, "description": rootProject.modDescription
-        }
-
-        filesMatching("META-INF/neoforge.mods.toml") {
+        filesMatching("META-INF/mods.toml") {
             expand "version": project.version, "description": rootProject.modDescription
         }
     }
