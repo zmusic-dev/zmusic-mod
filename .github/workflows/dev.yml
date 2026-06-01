@@ -18,6 +18,7 @@ on:
 
 jobs:
   build:
+    name: ZMusic ${{ matrix.loader }} ${{ matrix.mc-version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -26,110 +27,137 @@ jobs:
           - loader: Fabric
             build-dir: builds/fabric
             project: zmusic-fabric-26.1.2
+            mc-version: 26.1.2
             artifact-path: zmusic-fabric/zmusic-fabric-26.1.2/build/libs/**.jar
           - loader: Fabric
             build-dir: builds/fabric
             project: zmusic-fabric-1.21.11
+            mc-version: 1.21.11
             artifact-path: zmusic-fabric/zmusic-fabric-1.21.11/build/libs/**.jar
           - loader: Fabric
             build-dir: builds/fabric
             project: zmusic-fabric-1.21.5
+            mc-version: 1.21.5
             artifact-path: zmusic-fabric/zmusic-fabric-1.21.5/build/libs/**.jar
           - loader: Fabric
             build-dir: builds/fabric
             project: zmusic-fabric-1.20.6
+            mc-version: 1.20.6
             artifact-path: zmusic-fabric/zmusic-fabric-1.20.6/build/libs/**.jar
           - loader: Fabric
             build-dir: builds/fabric
             project: zmusic-fabric-1.20.4
+            mc-version: 1.20.4
             artifact-path: zmusic-fabric/zmusic-fabric-1.20.4/build/libs/**.jar
           - loader: Fabric
             build-dir: builds/fabric
             project: zmusic-fabric-1.20.1
+            mc-version: 1.20.1
             artifact-path: zmusic-fabric/zmusic-fabric-1.20.1/build/libs/**.jar
           - loader: Fabric
             build-dir: builds/fabric
             project: zmusic-fabric-1.19.4
+            mc-version: 1.19.4
             artifact-path: zmusic-fabric/zmusic-fabric-1.19.4/build/libs/**.jar
           - loader: Fabric
             build-dir: builds/fabric
             project: zmusic-fabric-1.19.2
+            mc-version: 1.19.2
             artifact-path: zmusic-fabric/zmusic-fabric-1.19.2/build/libs/**.jar
           - loader: Fabric
             build-dir: builds/fabric
             project: zmusic-fabric-1.18.2
+            mc-version: 1.18.2
             artifact-path: zmusic-fabric/zmusic-fabric-1.18.2/build/libs/**.jar
           - loader: Fabric
             build-dir: builds/fabric
             project: zmusic-fabric-1.17.1
+            mc-version: 1.17.1
             artifact-path: zmusic-fabric/zmusic-fabric-1.17.1/build/libs/**.jar
           - loader: Fabric
             build-dir: builds/fabric
             project: zmusic-fabric-1.16.5
+            mc-version: 1.16.5
             artifact-path: zmusic-fabric/zmusic-fabric-1.16.5/build/libs/**.jar
           - loader: Fabric
             build-dir: builds/fabric
             project: zmusic-fabric-1.15.2
+            mc-version: 1.15.2
             artifact-path: zmusic-fabric/zmusic-fabric-1.15.2/build/libs/**.jar
           - loader: Fabric
             build-dir: builds/fabric
             project: zmusic-fabric-1.14.4
+            mc-version: 1.14.4
             artifact-path: zmusic-fabric/zmusic-fabric-1.14.4/build/libs/**.jar
           - loader: Forge
             build-dir: builds/forge
             project: zmusic-forge-1.20.4
+            mc-version: 1.20.4
             artifact-path: zmusic-forge/zmusic-forge-1.20.4/build/libs/**.jar
           - loader: Forge
             build-dir: builds/forge
             project: zmusic-forge-1.20.1
+            mc-version: 1.20.1
             artifact-path: zmusic-forge/zmusic-forge-1.20.1/build/libs/**.jar
           - loader: Forge
             build-dir: builds/forge
             project: zmusic-forge-1.19.4
+            mc-version: 1.19.4
             artifact-path: zmusic-forge/zmusic-forge-1.19.4/build/libs/**.jar
           - loader: Forge
             build-dir: builds/forge
             project: zmusic-forge-1.19.2
+            mc-version: 1.19.2
             artifact-path: zmusic-forge/zmusic-forge-1.19.2/build/libs/**.jar
           - loader: Forge
             build-dir: builds/forge
             project: zmusic-forge-1.18.2
+            mc-version: 1.18.2
             artifact-path: zmusic-forge/zmusic-forge-1.18.2/build/libs/**.jar
           - loader: Forge
             build-dir: builds/forge
             project: zmusic-forge-1.17.1
+            mc-version: 1.17.1
             artifact-path: zmusic-forge/zmusic-forge-1.17.1/build/libs/**.jar
           - loader: Forge
             build-dir: builds/forge
             project: zmusic-forge-1.16.5
+            mc-version: 1.16.5
             artifact-path: zmusic-forge/zmusic-forge-1.16.5/build/libs/**.jar
           - loader: Forge
             build-dir: builds/forge
             project: zmusic-forge-1.15.2
+            mc-version: 1.15.2
             artifact-path: zmusic-forge/zmusic-forge-1.15.2/build/libs/**.jar
           - loader: Forge
             build-dir: builds/forge
             project: zmusic-forge-1.14.4
+            mc-version: 1.14.4
             artifact-path: zmusic-forge/zmusic-forge-1.14.4/build/libs/**.jar
           - loader: Forge
             build-dir: builds/forge
             project: zmusic-forge-1.12.2
+            mc-version: 1.12.2
             artifact-path: zmusic-forge/zmusic-forge-1.12.2/build/libs/**.jar
           - loader: NeoForge
             build-dir: builds/neoforge
             project: zmusic-neoforge-26.1.2
+            mc-version: 26.1.2
             artifact-path: zmusic-neoforge/zmusic-neoforge-26.1.2/build/libs/**.jar
           - loader: NeoForge
             build-dir: builds/neoforge
             project: zmusic-neoforge-1.21.1
+            mc-version: 1.21.1
             artifact-path: zmusic-neoforge/zmusic-neoforge-1.21.1/build/libs/**.jar
           - loader: NeoForge
             build-dir: builds/neoforge
             project: zmusic-neoforge-1.20.6
+            mc-version: 1.20.6
             artifact-path: zmusic-neoforge/zmusic-neoforge-1.20.6/build/libs/**.jar
           - loader: NeoForge
             build-dir: builds/neoforge
             project: zmusic-neoforge-1.20.4
+            mc-version: 1.20.4
             artifact-path: zmusic-neoforge/zmusic-neoforge-1.20.4/build/libs/**.jar
     steps:
       - uses: actions/checkout@v6
@@ -146,7 +174,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-${{ matrix.project }}-
             ${{ runner.os }}-gradle-
-      - name: Build ${{ matrix.loader }} ${{ matrix.project }}
+      - name: Build ${{ matrix.loader }} ${{ matrix.mc-version }}
         run: |
           ./gradlew --project-dir "${{ matrix.build-dir }}" ":${{ matrix.project }}:build" --no-daemon \
             -Pzmusic.project="${{ matrix.project }}" \
@@ -154,5 +182,5 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: ZMusic ${{ matrix.loader }} ${{ matrix.project }}
+          name: ZMusic ${{ matrix.loader }} ${{ matrix.mc-version }}
           path: ${{ matrix.artifact-path }}
