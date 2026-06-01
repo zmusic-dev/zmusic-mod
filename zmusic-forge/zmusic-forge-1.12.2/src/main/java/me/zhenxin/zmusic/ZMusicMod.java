@@ -22,7 +22,7 @@ import java.nio.charset.StandardCharsets;
  * @since 2023/1/28 13:01
  */
 @SuppressWarnings("AlibabaClassNamingShouldBeCamel")
-@Mod(modid = "zmusic", version = "3.6.0", acceptedMinecraftVersions = "[1.12,)")
+@Mod(modid = "zmusic", version = "3.7.0", acceptedMinecraftVersions = "[1.12,)")
 public class ZMusicMod {
 
     @Mod.EventHandler

@@ -140,7 +140,7 @@ subprojects {
     apply plugin: 'java-library'
 
     group = "me.zhenxin"
-    version = "3.6.0"
+    version = "3.7.0"
 
     pluginManager.withPlugin("net.minecraftforge.gradle") {
         repositories {
