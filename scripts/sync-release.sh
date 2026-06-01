@@ -216,6 +216,7 @@ build_codeberg_payload() {
     --arg tag_name "$RELEASE_TAG" \
     --arg name "$RELEASE_NAME" \
     --arg body "$RELEASE_BODY" \
+    --arg target_commitish "$RELEASE_TARGET_COMMITISH" \
     --argjson draft "$RELEASE_DRAFT" \
     --argjson prerelease "$RELEASE_PRERELEASE" '
       {
@@ -225,6 +226,7 @@ build_codeberg_payload() {
         draft: $draft,
         prerelease: $prerelease
       }
+      + (if $target_commitish == "" then {} else {target_commitish: $target_commitish} end)
     '
 }
 
