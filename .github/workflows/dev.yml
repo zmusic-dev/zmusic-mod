@@ -148,7 +148,7 @@ jobs:
             ${{ runner.os }}-gradle-
       - name: Build ${{ matrix.loader }} ${{ matrix.project }}
         run: |
-          ./gradlew --project-dir "${{ matrix.build-dir }}" ":${{ matrix.project }}:jar" --no-daemon \
+          ./gradlew --project-dir "${{ matrix.build-dir }}" ":${{ matrix.project }}:build" --no-daemon \
             -Pzmusic.project="${{ matrix.project }}" \
             -Porg.gradle.java.installations.paths="$(mise where java@temurin-8),$(mise where java@temurin-16),$(mise where java@temurin-17),$(mise where java@temurin-21),$(mise where java@temurin-25)"
       - name: Upload Artifact
