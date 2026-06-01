@@ -274,8 +274,22 @@ codeberg_release_assets_path() {
     "$(urlencode "$release_id")"
 }
 
+ensure_codeberg_releases_enabled() {
+  local payload
+  payload="$(jq -cn '{has_releases: true}')"
+
+  codeberg_api \
+    PATCH \
+    "/repos/${CODEBERG_OWNER_URI}/${CODEBERG_REPO_NAME_URI}" \
+    -H "Content-Type: application/json" \
+    --data "$payload"
+  expect_status "$API_RESPONSE_STATUS" 200
+}
+
 get_or_create_codeberg_release() {
   local tag_uri payload release_path
+  ensure_codeberg_releases_enabled
+
   tag_uri="$(urlencode "$RELEASE_TAG")"
   release_path="/repos/${CODEBERG_OWNER_URI}/${CODEBERG_REPO_NAME_URI}/releases/tags/${tag_uri}"
 
