@@ -15,42 +15,32 @@ def requirePublishEnv = { String name ->
 }
 
 def publishApiRequest = { String method, String url, Map<String, String> headers = [:], Closure bodyWriter = null ->
-    def connection = (HttpURLConnection) new URL(url).openConnection()
-    connection.requestMethod = method
-    connection.instanceFollowRedirects = true
-    connection.setRequestProperty('User-Agent', 'ZMusic-Gradle-Publish')
+    def requestBuilder = java.net.http.HttpRequest.newBuilder(java.net.URI.create(url))
+    requestBuilder.header('User-Agent', 'ZMusic-Gradle-Publish')
     headers.each { key, value ->
-        connection.setRequestProperty(key, value)
+        requestBuilder.header(key, value)
     }
 
+    def bodyPublisher = java.net.http.HttpRequest.BodyPublishers.noBody()
     if (bodyWriter != null) {
-        connection.doOutput = true
-        bodyWriter(connection.outputStream)
+        def outputStream = new ByteArrayOutputStream()
+        bodyWriter(outputStream)
+        bodyPublisher = java.net.http.HttpRequest.BodyPublishers.ofByteArray(outputStream.toByteArray())
     }
 
-    def status = connection.responseCode
-    def stream = status >= 400 ? connection.errorStream : connection.inputStream
-    def body = stream == null ? '' : stream.getText('UTF-8')
-    connection.disconnect()
+    def request = requestBuilder
+        .method(method, bodyPublisher)
+        .build()
+    def response = java.net.http.HttpClient.newBuilder()
+        .followRedirects(java.net.http.HttpClient.Redirect.NORMAL)
+        .build()
+        .send(request, java.net.http.HttpResponse.BodyHandlers.ofString(java.nio.charset.StandardCharsets.UTF_8))
 
-    [status: status, body: body]
+    [status: response.statusCode(), body: response.body()]
 }
 
 def publishApiRequestWithoutBody = { String method, String url, Map<String, String> headers = [:] ->
-    def connection = (HttpURLConnection) new URL(url).openConnection()
-    connection.requestMethod = method
-    connection.instanceFollowRedirects = true
-    connection.setRequestProperty('User-Agent', 'ZMusic-Gradle-Publish')
-    headers.each { key, value ->
-        connection.setRequestProperty(key, value)
-    }
-
-    def status = connection.responseCode
-    def stream = status >= 400 ? connection.errorStream : connection.inputStream
-    def body = stream == null ? '' : stream.getText('UTF-8')
-    connection.disconnect()
-
-    [status: status, body: body]
+    publishApiRequest(method, url, headers)
 }
 
 def expectPublishStatus = { response, List<Integer> expected ->
