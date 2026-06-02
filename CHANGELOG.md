@@ -1,5 +1,15 @@
 # Changelog
 
+## v3.7.1
+
+- 修复 Forge 版在 SCP Lockdown 滑动门等模组触发空声音事件时，可能因读取声音分类导致客户端崩溃的问题。
+- 修复 Fabric 版在收到空声音实例时可能触发同类崩溃的问题。
+
+English:
+
+- Fixed a Forge client crash when mods such as SCP Lockdown sliding doors emit a sound event with a null sound instance.
+- Fixed the same class of Fabric crash when a null sound instance is passed to the sound hook.
+
 ## v3.7.0
 
 - 将模组运行时切换到原生 `zmusic-player`。
