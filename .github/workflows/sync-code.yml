@@ -20,6 +20,7 @@ jobs:
           fetch-depth: 0
 
       - name: Sync to Codeberg
+        continue-on-error: true
         env:
           CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
         run: |
@@ -29,6 +30,7 @@ jobs:
           git push codeberg --tags --force
 
       - name: Sync to CNB
+        continue-on-error: true
         env:
           CNB_TOKEN: ${{ secrets.CNB_TOKEN }}
         run: |
