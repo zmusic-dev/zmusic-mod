@@ -159,6 +159,8 @@ jobs:
             artifact-name: ZMusic NeoForge 1.20.4
     steps:
       - uses: actions/checkout@v6
+      - name: Setup mise
+        uses: jdx/mise-action@v4
       - name: Download release asset
         env:
           GH_TOKEN: ${{ github.token }}
@@ -187,4 +189,5 @@ jobs:
             find artifact -maxdepth 2 -type f -print >&2
             exit 1
           fi
-          FILE_PATH="$FILE_PATH" bash scripts/publish-marketplace-file.sh
+          FILE_PATH="$(realpath "$FILE_PATH")"
+          FILE_PATH="$FILE_PATH" ./gradlew --project-dir builds/publish publishMarketplaceFile --no-daemon

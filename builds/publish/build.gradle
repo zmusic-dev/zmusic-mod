@@ -1,0 +1,276 @@
+def publishMarketplaceLog = { String message ->
+    println("[publish-marketplace] ${message}")
+}
+
+def publishMarketplaceFail = { String message ->
+    throw new GradleException("[publish-marketplace] ${message}")
+}
+
+def requirePublishEnv = { String name ->
+    def value = System.getenv(name)
+    if (value == null || value.isBlank()) {
+        publishMarketplaceFail("missing required environment variable: ${name}")
+    }
+    value
+}
+
+def publishApiRequest = { String method, String url, Map<String, String> headers = [:], Closure bodyWriter = null ->
+    def connection = (HttpURLConnection) new URL(url).openConnection()
+    connection.requestMethod = method
+    connection.instanceFollowRedirects = true
+    connection.setRequestProperty('User-Agent', 'ZMusic-Gradle-Publish')
+    headers.each { key, value ->
+        connection.setRequestProperty(key, value)
+    }
+
+    if (bodyWriter != null) {
+        connection.doOutput = true
+        bodyWriter(connection.outputStream)
+    }
+
+    def status = connection.responseCode
+    def stream = status >= 400 ? connection.errorStream : connection.inputStream
+    def body = stream == null ? '' : stream.getText('UTF-8')
+    connection.disconnect()
+
+    [status: status, body: body]
+}
+
+def expectPublishStatus = { response, List<Integer> expected ->
+    if (!expected.contains(response.status as Integer)) {
+        publishMarketplaceFail("unexpected HTTP status: ${response.status}, response: ${response.body ?: '<empty>'}")
+    }
+}
+
+def prettyPublishJson = { value ->
+    groovy.json.JsonOutput.prettyPrint(value instanceof String ? value : groovy.json.JsonOutput.toJson(value))
+}
+
+def loaderDisplayName = { String loader ->
+    switch (loader) {
+        case 'fabric': return 'Fabric'
+        case 'forge': return 'Forge'
+        case 'neoforge': return 'NeoForge'
+        default: publishMarketplaceFail("unsupported loader: ${loader}")
+    }
+}
+
+def writeMultipart = { OutputStream outputStream, String boundary, Map<String, String> fields, File file, String fileField, String fileName ->
+    outputStream.withCloseable { out ->
+        fields.each { key, value ->
+            out.write("--${boundary}\r\n".getBytes('UTF-8'))
+            out.write("Content-Disposition: form-data; name=\"${key}\"\r\n\r\n".getBytes('UTF-8'))
+            out.write(value.getBytes('UTF-8'))
+            out.write("\r\n".getBytes('UTF-8'))
+        }
+
+        out.write("--${boundary}\r\n".getBytes('UTF-8'))
+        out.write("Content-Disposition: form-data; name=\"${fileField}\"; filename=\"${fileName}\"\r\n".getBytes('UTF-8'))
+        out.write("Content-Type: application/java-archive\r\n\r\n".getBytes('UTF-8'))
+        file.withInputStream { input ->
+            input.transferTo(out)
+        }
+        out.write("\r\n--${boundary}--\r\n".getBytes('UTF-8'))
+    }
+}
+
+def parsePublishVersions = {
+    def rawVersions = System.getenv('MC_VERSIONS') ?: requirePublishEnv('MC_VERSION')
+    def versions = rawVersions.replace(',', ' ').split(/\s+/).findAll { !it.isBlank() }
+    if (versions.isEmpty()) {
+        publishMarketplaceFail('missing Minecraft versions')
+    }
+    versions
+}
+
+def curseForgeGameVersionId = { List versions, List versionTypes, String versionName, String kind ->
+    List matches
+    switch (kind) {
+        case 'loader':
+            matches = versions.findAll {
+                it.name == versionName && it.gameVersionTypeID == 68441
+            }
+            break
+        case 'minecraft':
+            def minecraftTypeIds = versionTypes.findAll {
+                (it.name as String).startsWith('Minecraft ')
+            }.collect { it.id }
+            matches = versions.findAll {
+                it.name == versionName && minecraftTypeIds.contains(it.gameVersionTypeID)
+            }
+            break
+        default:
+            publishMarketplaceFail("unsupported CurseForge game version kind: ${kind}")
+    }
+
+    if (matches.size() != 1) {
+        publishMarketplaceFail("expected one CurseForge ${kind} version id for ${versionName}, got ${matches.size()}: ${groovy.json.JsonOutput.toJson(matches.collect { it.id })}")
+    }
+
+    matches[0].id
+}
+
+tasks.register('publishMarketplaceFile') {
+    group = 'publishing'
+    description = 'Publishes or dry-runs one built ZMusic jar on Modrinth and CurseForge.'
+
+    doLast {
+        def filePath = requirePublishEnv('FILE_PATH')
+        def modLoader = requirePublishEnv('MOD_LOADER')
+        def mcVersion = requirePublishEnv('MC_VERSION')
+        def releaseVersion = requirePublishEnv('RELEASE_VERSION')
+        def file = new File(filePath)
+        if (!file.isFile()) {
+            publishMarketplaceFail("file does not exist: ${filePath}")
+        }
+
+        def fileName = file.name
+        def releaseName = System.getenv('RELEASE_NAME') ?: "ZMusic ${releaseVersion} ${modLoader} ${mcVersion}"
+        def changelog = System.getenv('CHANGELOG') ?: ''
+        def modrinthApiBaseUrl = System.getenv('MODRINTH_API_BASE_URL') ?: 'https://api.modrinth.com/v2'
+        def curseForgeApiBaseUrl = System.getenv('CURSEFORGE_API_BASE_URL') ?: 'https://minecraft.curseforge.com'
+        def publishModrinth = System.getenv('PUBLISH_MODRINTH') ?: 'true'
+        def publishCurseForge = System.getenv('PUBLISH_CURSEFORGE') ?: 'true'
+        def dryRun = System.getenv('DRY_RUN') ?: 'false'
+        def minecraftVersions = parsePublishVersions()
+
+        if (!(dryRun in ['true', 'false'])) {
+            publishMarketplaceFail("DRY_RUN must be true or false")
+        }
+
+        if (publishModrinth == 'true') {
+            def projectId = requirePublishEnv('MODRINTH_PROJECT_ID')
+            def token = requirePublishEnv('MODRINTH_TOKEN')
+            def metadata = [
+                    name            : releaseName,
+                    version_number  : releaseVersion,
+                    changelog       : changelog,
+                    dependencies    : [],
+                    game_versions   : minecraftVersions,
+                    version_type    : 'release',
+                    loaders         : [modLoader],
+                    featured        : false,
+                    status          : 'listed',
+                    requested_status: 'listed',
+                    project_id      : projectId,
+                    file_parts      : ['file'],
+                    primary_file    : 'file'
+            ]
+
+            def response = publishApiRequest(
+                    'GET',
+                    "${modrinthApiBaseUrl.replaceAll('/+$', '')}/project/${projectId}/version",
+                    ['Authorization': "Bearer ${token}", 'Accept': 'application/json']
+            )
+            expectPublishStatus(response, [200])
+            def versions = new groovy.json.JsonSlurper().parseText(response.body) as List
+
+            def existing = versions.findAll {
+                it.version_number == releaseVersion
+                        && (it.loaders as List).contains(modLoader)
+                        && ((it.files ?: []).collect { f -> f.filename }).contains(fileName)
+            }
+            def matching = existing.findAll {
+                def publishedVersions = it.game_versions as List
+                minecraftVersions.every { publishedVersions.contains(it) }
+            }
+
+            if (!matching.isEmpty()) {
+                publishMarketplaceLog("Modrinth already has ${fileName}; skipping")
+            } else {
+                if (!existing.isEmpty()) {
+                    publishMarketplaceFail("Modrinth already has ${fileName} but its game_versions do not cover: ${minecraftVersions.join(' ')}")
+                }
+
+                def metadataJson = groovy.json.JsonOutput.toJson(metadata)
+                if (dryRun == 'true') {
+                    publishMarketplaceLog('DRY_RUN Modrinth metadata:')
+                    println(prettyPublishJson(metadataJson))
+                } else {
+                    publishMarketplaceLog("Publishing Modrinth: ${releaseName} (${modLoader} ${minecraftVersions.join(' ')})")
+                    def boundary = "----ZMusicGradle${System.nanoTime()}"
+                    response = publishApiRequest(
+                            'POST',
+                            "${modrinthApiBaseUrl.replaceAll('/+$', '')}/version",
+                            [
+                                    'Authorization': "Bearer ${token}",
+                                    'Accept'       : 'application/json',
+                                    'Content-Type' : "multipart/form-data; boundary=${boundary}"
+                            ]
+                    ) { OutputStream out ->
+                        writeMultipart(out, boundary, [data: metadataJson], file, 'file', fileName)
+                    }
+                    expectPublishStatus(response, [200])
+                    publishMarketplaceLog('Modrinth response:')
+                    println(prettyPublishJson(response.body))
+                }
+            }
+        } else if (publishModrinth == 'false') {
+            publishMarketplaceLog('Skipping Modrinth')
+        } else {
+            publishMarketplaceFail('PUBLISH_MODRINTH must be true or false')
+        }
+
+        if (publishCurseForge == 'true') {
+            def projectId = requirePublishEnv('CURSEFORGE_PROJECT_ID')
+            def token = requirePublishEnv('CURSEFORGE_TOKEN')
+            def loaderName = loaderDisplayName(modLoader)
+
+            def response = publishApiRequest(
+                    'GET',
+                    "${curseForgeApiBaseUrl.replaceAll('/+$', '')}/api/game/versions",
+                    ['X-Api-Token': token, 'Accept': 'application/json']
+            )
+            expectPublishStatus(response, [200])
+            def curseForgeVersions = new groovy.json.JsonSlurper().parseText(response.body) as List
+
+            response = publishApiRequest(
+                    'GET',
+                    "${curseForgeApiBaseUrl.replaceAll('/+$', '')}/api/game/version-types",
+                    ['X-Api-Token': token, 'Accept': 'application/json']
+            )
+            expectPublishStatus(response, [200])
+            def curseForgeVersionTypes = new groovy.json.JsonSlurper().parseText(response.body) as List
+
+            def loaderVersionId = curseForgeGameVersionId(curseForgeVersions, curseForgeVersionTypes, loaderName, 'loader')
+            def minecraftVersionIds = minecraftVersions.collect {
+                curseForgeGameVersionId(curseForgeVersions, curseForgeVersionTypes, it, 'minecraft')
+            }
+            def gameVersionIds = ([loaderVersionId] + minecraftVersionIds).collect { it as Integer }
+            def metadata = [
+                    changelog    : changelog,
+                    changelogType: 'markdown',
+                    displayName  : releaseName,
+                    gameVersions : gameVersionIds,
+                    releaseType  : 'release'
+            ]
+            def metadataJson = groovy.json.JsonOutput.toJson(metadata)
+
+            if (dryRun == 'true') {
+                publishMarketplaceLog('DRY_RUN CurseForge metadata:')
+                println(prettyPublishJson(metadataJson))
+            } else {
+                publishMarketplaceLog("Publishing CurseForge: ${releaseName} (${loaderName} ${minecraftVersions.join(' ')})")
+                def boundary = "----ZMusicGradle${System.nanoTime()}"
+                response = publishApiRequest(
+                        'POST',
+                        "${curseForgeApiBaseUrl.replaceAll('/+$', '')}/api/projects/${projectId}/upload-file",
+                        [
+                                'X-Api-Token' : token,
+                                'Accept'      : 'application/json',
+                                'Content-Type': "multipart/form-data; boundary=${boundary}"
+                        ]
+                ) { OutputStream out ->
+                    writeMultipart(out, boundary, [metadata: metadataJson], file, 'file', fileName)
+                }
+                expectPublishStatus(response, [200])
+                publishMarketplaceLog('CurseForge response:')
+                println(prettyPublishJson(response.body))
+            }
+        } else if (publishCurseForge == 'false') {
+            publishMarketplaceLog('Skipping CurseForge')
+        } else {
+            publishMarketplaceFail('PUBLISH_CURSEFORGE must be true or false')
+        }
+    }
+}
