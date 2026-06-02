@@ -140,6 +140,8 @@ publish_modrinth() {
     -F "data=$metadata" \
     -F "file=@${FILE_PATH};filename=${FILE_NAME}"
   expect_status "$API_RESPONSE_STATUS" 200
+  log "Modrinth response:"
+  log_json "$API_RESPONSE_BODY"
 }
 
 publish_curseforge() {
@@ -179,6 +181,8 @@ publish_curseforge() {
     -F "metadata=$metadata" \
     -F "file=@${FILE_PATH};filename=${FILE_NAME}"
   expect_status "$API_RESPONSE_STATUS" 200
+  log "CurseForge response:"
+  log_json "$API_RESPONSE_BODY"
 }
 
 main() {
