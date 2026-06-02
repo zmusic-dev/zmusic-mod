@@ -13,6 +13,46 @@ on:
       - 'v*'
 
 jobs:
+  changelog:
+    name: Extract release notes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Extract release notes
+        run: |
+          set -euo pipefail
+
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            scripts/extract-changelog.sh "${GITHUB_REF_NAME}" > release-notes.md
+          else
+            latest_tag="$(git describe --tags --abbrev=0 HEAD 2>/dev/null || true)"
+            {
+              printf 'Dry-run release notes for `%s`.\n\n' "${GITHUB_REF_NAME}"
+              printf 'No tag was provided, so this dry-run uses commit subjects after the latest tag.\n\n'
+              if [ -n "$latest_tag" ]; then
+                git log --pretty='- %s' "${latest_tag}..HEAD"
+              else
+                git log --pretty='- %s'
+              fi
+            } > release-notes.md
+          fi
+
+          if [ ! -s release-notes.md ]; then
+            echo "release notes are empty" >&2
+            exit 1
+          fi
+
+          cat release-notes.md
+      - name: Upload Release Notes
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-notes
+          path: release-notes.md
+
   build:
     name: ZMusic ${{ matrix.loader }} ${{ matrix.target-version }}
     runs-on: ubuntu-latest
@@ -184,7 +224,9 @@ jobs:
   marketplace-dry-run:
     name: Check ${{ matrix.loader }} ${{ matrix.target-version }}
     runs-on: ubuntu-latest
-    needs: build
+    needs:
+      - build
+      - changelog
     strategy:
       fail-fast: false
       max-parallel: 4
@@ -334,6 +376,11 @@ jobs:
         with:
           name: ${{ matrix.artifact-name }}
           path: artifact
+      - name: Download Release Notes
+        uses: actions/download-artifact@v7
+        with:
+          name: release-notes
+          path: release-notes
       - name: Dry-run CurseForge and Modrinth
         env:
           MOD_LOADER: ${{ matrix.mod-loader }}
@@ -354,12 +401,16 @@ jobs:
             exit 1
           fi
           FILE_PATH="$(realpath "$FILE_PATH")"
-          FILE_PATH="$FILE_PATH" ./gradlew --project-dir builds/publish publishMarketplaceFile --no-daemon
+          CHANGELOG="$(cat release-notes/release-notes.md)" \
+            FILE_PATH="$FILE_PATH" \
+            ./gradlew --project-dir builds/publish publishMarketplaceFile --no-daemon
 
   release-mirrors-dry-run:
     name: Check Codeberg and CNB release
     runs-on: ubuntu-latest
-    needs: build
+    needs:
+      - build
+      - changelog
     steps:
       - uses: actions/checkout@v6
       - name: Setup mise
@@ -368,6 +419,11 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           path: artifacts
+      - name: Download Release Notes
+        uses: actions/download-artifact@v7
+        with:
+          name: release-notes
+          path: release-notes
       - name: Dry-run Codeberg and CNB
         env:
           RELEASE_VERSION: ${{ github.ref_name }}
@@ -378,13 +434,16 @@ jobs:
           CNB_REPO: zmusic-dev/zmusic-mod
           DRY_RUN: true
         run: |
-          ARTIFACTS_DIR="$(realpath artifacts)" ./gradlew --project-dir builds/publish publishReleaseMirrors --no-daemon
+          RELEASE_BODY="$(cat release-notes/release-notes.md)" \
+            ARTIFACTS_DIR="$(realpath artifacts)" \
+            ./gradlew --project-dir builds/publish publishReleaseMirrors --no-daemon
 
   release:
     name: Publish GitHub release
     runs-on: ubuntu-latest
     needs:
       - build
+      - changelog
       - marketplace-dry-run
       - release-mirrors-dry-run
     if: ${{ github.ref_type == 'tag' && (github.event_name != 'workflow_dispatch' || inputs.dry-run == false) }}
@@ -396,10 +455,16 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           path: artifacts
+      - name: Download Release Notes
+        uses: actions/download-artifact@v7
+        with:
+          name: release-notes
+          path: release-notes
       - name: Release
         id: release
         uses: softprops/action-gh-release@v3
         with:
+          body_path: release-notes/release-notes.md
           files: artifacts/**/*.jar
 
   publish-marketplaces:
@@ -407,6 +472,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - release
+      - changelog
       - marketplace-dry-run
     if: ${{ github.ref_type == 'tag' && (github.event_name != 'workflow_dispatch' || inputs.dry-run == false) }}
     strategy:
@@ -558,6 +624,11 @@ jobs:
         with:
           name: ${{ matrix.artifact-name }}
           path: artifact
+      - name: Download Release Notes
+        uses: actions/download-artifact@v7
+        with:
+          name: release-notes
+          path: release-notes
       - name: Publish to CurseForge and Modrinth
         env:
           MOD_LOADER: ${{ matrix.mod-loader }}
@@ -578,13 +649,16 @@ jobs:
             exit 1
           fi
           FILE_PATH="$(realpath "$FILE_PATH")"
-          FILE_PATH="$FILE_PATH" ./gradlew --project-dir builds/publish publishMarketplaceFile --no-daemon
+          CHANGELOG="$(cat release-notes/release-notes.md)" \
+            FILE_PATH="$FILE_PATH" \
+            ./gradlew --project-dir builds/publish publishMarketplaceFile --no-daemon
 
   publish-release-mirrors:
     name: Publish Codeberg and CNB release
     runs-on: ubuntu-latest
     needs:
       - release
+      - changelog
       - release-mirrors-dry-run
     if: ${{ github.ref_type == 'tag' && (github.event_name != 'workflow_dispatch' || inputs.dry-run == false) }}
     steps:
@@ -595,6 +669,11 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           path: artifacts
+      - name: Download Release Notes
+        uses: actions/download-artifact@v7
+        with:
+          name: release-notes
+          path: release-notes
       - name: Publish to Codeberg and CNB
         env:
           RELEASE_VERSION: ${{ github.ref_name }}
@@ -607,4 +686,6 @@ jobs:
           CNB_REPO: zmusic-dev/zmusic-mod
           DRY_RUN: false
         run: |
-          ARTIFACTS_DIR="$(realpath artifacts)" ./gradlew --project-dir builds/publish publishReleaseMirrors --no-daemon
+          RELEASE_BODY="$(cat release-notes/release-notes.md)" \
+            ARTIFACTS_DIR="$(realpath artifacts)" \
+            ./gradlew --project-dir builds/publish publishReleaseMirrors --no-daemon

@@ -170,6 +170,19 @@ jobs:
           gh -R "${{ github.repository }}" release download "$TAG" \
             -D artifact \
             -p "zmusic-${{ matrix.mod-loader }}-${{ matrix.target-version }}-${TAG#v}.jar"
+      - name: Download release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          gh -R "${{ github.repository }}" release view "$TAG" \
+            --json body \
+            --jq '.body // ""' > release-notes.md
+
+          if [ ! -s release-notes.md ]; then
+            echo "release notes are empty for $TAG" >&2
+            exit 1
+          fi
       - name: Publish to CurseForge and Modrinth
         env:
           MOD_LOADER: ${{ matrix.mod-loader }}
@@ -190,4 +203,6 @@ jobs:
             exit 1
           fi
           FILE_PATH="$(realpath "$FILE_PATH")"
-          FILE_PATH="$FILE_PATH" ./gradlew --project-dir builds/publish publishMarketplaceFile --no-daemon
+          CHANGELOG="$(cat release-notes.md)" \
+            FILE_PATH="$FILE_PATH" \
+            ./gradlew --project-dir builds/publish publishMarketplaceFile --no-daemon
