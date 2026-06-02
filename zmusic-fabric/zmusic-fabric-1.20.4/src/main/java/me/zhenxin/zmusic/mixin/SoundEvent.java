@@ -14,15 +14,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class SoundEvent {
     @Inject(method = "play(Lnet/minecraft/client/sound/SoundInstance;)V", at = @At("HEAD"), cancellable = true)
     public void play(SoundInstance soundInstance, CallbackInfo info) {
-        if (ZMusic.getPlayer().getState() == ZMusicPlayer.STATE_PLAYING) {
-            SoundCategory data = soundInstance.getCategory();
-            switch (data) {
-                case RECORDS:
-                case MUSIC:
-                    info.cancel();
-                    break;
-                default:
-            }
+        if (ZMusic.getPlayer().getState() != ZMusicPlayer.STATE_PLAYING || soundInstance == null) {
+            return;
+        }
+        SoundCategory data = soundInstance.getCategory();
+        switch (data) {
+            case RECORDS:
+            case MUSIC:
+                info.cancel();
+                break;
+            default:
         }
     }
 }
