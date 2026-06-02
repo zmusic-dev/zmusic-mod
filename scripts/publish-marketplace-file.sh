@@ -67,24 +67,88 @@ loader_display_name() {
   esac
 }
 
+curseforge_game_version_id() {
+  local version_name="$1"
+  local kind="$2"
+  local query
+
+  case "$kind" in
+    loader)
+      query='
+        [.[]
+          | select(.name == $version_name and .gameVersionTypeID == 68441)
+          | .id
+        ]'
+      ;;
+    minecraft)
+      query='
+        def minecraft_version_type_ids:
+          $version_types
+          | map(select(.name | startswith("Minecraft ")) | .id);
+
+        [.[]
+          | select(
+              .name == $version_name
+              and (.gameVersionTypeID as $type_id | minecraft_version_type_ids | index($type_id))
+            )
+          | .id
+        ]'
+      ;;
+    *) fail "unsupported CurseForge game version kind: $kind" ;;
+  esac
+
+  local matches count
+  matches="$(
+    jq \
+      -c \
+      --arg version_name "$version_name" \
+      --argjson version_types "$CURSEFORGE_GAME_VERSION_TYPES" \
+      "$query" \
+      <<<"$CURSEFORGE_GAME_VERSIONS"
+  )"
+  count="$(jq 'length' <<<"$matches")"
+
+  if [[ "$count" != "1" ]]; then
+    fail "expected one CurseForge $kind version id for $version_name, got $count: $matches"
+  fi
+
+  jq -r '.[0]' <<<"$matches"
+}
+
+parse_minecraft_versions() {
+  local raw_versions="${MC_VERSIONS:-$MC_VERSION}"
+  raw_versions="${raw_versions//,/ }"
+
+  read -r -a MINECRAFT_VERSIONS <<<"$raw_versions"
+  if [[ "${#MINECRAFT_VERSIONS[@]}" == "0" ]]; then
+    fail "missing Minecraft versions"
+  fi
+
+  MINECRAFT_VERSIONS_JSON="$(
+    printf '%s\n' "${MINECRAFT_VERSIONS[@]}" |
+      jq -R . |
+      jq -s .
+  )"
+}
+
 publish_modrinth() {
   require_env MODRINTH_PROJECT_ID
 
-  local metadata existing_count
+  local metadata existing_count matching_count incomplete_count
   metadata="$(
     jq -cn \
       --arg name "$RELEASE_NAME" \
       --arg version_number "$RELEASE_VERSION" \
       --arg project_id "$MODRINTH_PROJECT_ID" \
       --arg loader "$MOD_LOADER" \
-      --arg game_version "$MC_VERSION" \
+      --argjson game_versions "$MINECRAFT_VERSIONS_JSON" \
       --arg changelog "$CHANGELOG" \
       '{
         name: $name,
         version_number: $version_number,
         changelog: $changelog,
         dependencies: [],
-        game_versions: [$game_version],
+        game_versions: $game_versions,
         version_type: "release",
         loaders: [$loader],
         featured: false,
@@ -115,23 +179,41 @@ publish_modrinth() {
     jq \
       --arg version_number "$RELEASE_VERSION" \
       --arg loader "$MOD_LOADER" \
-      --arg game_version "$MC_VERSION" \
       --arg filename "$FILE_NAME" \
       '[.[] | select(
         .version_number == $version_number
         and (.loaders | index($loader))
-        and (.game_versions | index($game_version))
         and ([.files[]?.filename] | index($filename))
       )] | length' \
       <<<"$API_RESPONSE_BODY"
   )"
 
-  if [[ "$existing_count" != "0" ]]; then
+  matching_count="$(
+    jq \
+      --arg version_number "$RELEASE_VERSION" \
+      --arg loader "$MOD_LOADER" \
+      --arg filename "$FILE_NAME" \
+      --argjson game_versions "$MINECRAFT_VERSIONS_JSON" \
+      '[.[] | select(
+        .version_number == $version_number
+        and (.loaders | index($loader))
+        and ([.files[]?.filename] | index($filename))
+        and (($game_versions - .game_versions) | length == 0)
+      )] | length' \
+      <<<"$API_RESPONSE_BODY"
+  )"
+
+  if [[ "$matching_count" != "0" ]]; then
     log "Modrinth already has $FILE_NAME; skipping"
     return
   fi
 
-  log "Publishing Modrinth: $RELEASE_NAME ($MOD_LOADER $MC_VERSION)"
+  incomplete_count="$((existing_count - matching_count))"
+  if [[ "$incomplete_count" != "0" ]]; then
+    fail "Modrinth already has $FILE_NAME but its game_versions do not cover: ${MINECRAFT_VERSIONS[*]}"
+  fi
+
+  log "Publishing Modrinth: $RELEASE_NAME ($MOD_LOADER ${MINECRAFT_VERSIONS[*]})"
   api_request \
     POST \
     "${MODRINTH_API_BASE_URL%/}/version" \
@@ -147,19 +229,57 @@ publish_modrinth() {
 publish_curseforge() {
   require_env CURSEFORGE_PROJECT_ID
 
-  local metadata loader_name
+  local metadata loader_name loader_version_id mc_version_ids game_version_ids
   loader_name="$(loader_display_name "$MOD_LOADER")"
+
+  if [[ "$DRY_RUN" != "true" || -n "${CURSEFORGE_TOKEN:-}" ]]; then
+    require_env CURSEFORGE_TOKEN
+
+    api_request \
+      GET \
+      "${CURSEFORGE_API_BASE_URL%/}/api/game/versions" \
+      -H "X-Api-Token: $CURSEFORGE_TOKEN" \
+      -H "Accept: application/json"
+    expect_status "$API_RESPONSE_STATUS" 200
+    CURSEFORGE_GAME_VERSIONS="$API_RESPONSE_BODY"
+
+    api_request \
+      GET \
+      "${CURSEFORGE_API_BASE_URL%/}/api/game/version-types" \
+      -H "X-Api-Token: $CURSEFORGE_TOKEN" \
+      -H "Accept: application/json"
+    expect_status "$API_RESPONSE_STATUS" 200
+    CURSEFORGE_GAME_VERSION_TYPES="$API_RESPONSE_BODY"
+
+    loader_version_id="$(curseforge_game_version_id "$loader_name" loader)"
+    mc_version_ids=()
+    local minecraft_version
+    for minecraft_version in "${MINECRAFT_VERSIONS[@]}"; do
+      mc_version_ids+=("$(curseforge_game_version_id "$minecraft_version" minecraft)")
+    done
+    game_version_ids="$(
+      printf '%s\n' "$loader_version_id" "${mc_version_ids[@]}" |
+        jq -R 'tonumber' |
+        jq -s .
+    )"
+  else
+    game_version_ids="$(
+      printf '%s\n' 0 |
+        jq -R 'tonumber' |
+        jq -s .
+    )"
+  fi
+
   metadata="$(
     jq -cn \
       --arg changelog "$CHANGELOG" \
       --arg display_name "$RELEASE_NAME" \
-      --arg loader_name "$loader_name" \
-      --arg game_version "$MC_VERSION" \
+      --argjson game_version_ids "$game_version_ids" \
       '{
         changelog: $changelog,
         changelogType: "markdown",
         displayName: $display_name,
-        gameVersionNames: [$loader_name, $game_version],
+        gameVersions: $game_version_ids,
         releaseType: "release"
       }'
   )"
@@ -170,9 +290,7 @@ publish_curseforge() {
     return
   fi
 
-  require_env CURSEFORGE_TOKEN
-
-  log "Publishing CurseForge: $RELEASE_NAME ($loader_name $MC_VERSION)"
+  log "Publishing CurseForge: $RELEASE_NAME ($loader_name ${MINECRAFT_VERSIONS[*]})"
   api_request \
     POST \
     "${CURSEFORGE_API_BASE_URL%/}/api/projects/${CURSEFORGE_PROJECT_ID}/upload-file" \
@@ -203,6 +321,7 @@ main() {
   PUBLISH_MODRINTH="${PUBLISH_MODRINTH:-true}"
   PUBLISH_CURSEFORGE="${PUBLISH_CURSEFORGE:-true}"
   DRY_RUN="${DRY_RUN:-false}"
+  parse_minecraft_versions
 
   case "$DRY_RUN" in
     true | false) ;;
