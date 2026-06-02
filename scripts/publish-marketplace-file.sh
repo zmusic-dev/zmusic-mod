@@ -160,12 +160,6 @@ publish_modrinth() {
       }'
   )"
 
-  if [[ "$DRY_RUN" == "true" ]]; then
-    log "DRY_RUN Modrinth metadata:"
-    log_json "$metadata"
-    return
-  fi
-
   require_env MODRINTH_TOKEN
 
   api_request \
@@ -213,6 +207,12 @@ publish_modrinth() {
     fail "Modrinth already has $FILE_NAME but its game_versions do not cover: ${MINECRAFT_VERSIONS[*]}"
   fi
 
+  if [[ "$DRY_RUN" == "true" ]]; then
+    log "DRY_RUN Modrinth metadata:"
+    log_json "$metadata"
+    return
+  fi
+
   log "Publishing Modrinth: $RELEASE_NAME ($MOD_LOADER ${MINECRAFT_VERSIONS[*]})"
   api_request \
     POST \
@@ -232,43 +232,35 @@ publish_curseforge() {
   local metadata loader_name loader_version_id mc_version_ids game_version_ids
   loader_name="$(loader_display_name "$MOD_LOADER")"
 
-  if [[ "$DRY_RUN" != "true" || -n "${CURSEFORGE_TOKEN:-}" ]]; then
-    require_env CURSEFORGE_TOKEN
+  require_env CURSEFORGE_TOKEN
 
-    api_request \
-      GET \
-      "${CURSEFORGE_API_BASE_URL%/}/api/game/versions" \
-      -H "X-Api-Token: $CURSEFORGE_TOKEN" \
-      -H "Accept: application/json"
-    expect_status "$API_RESPONSE_STATUS" 200
-    CURSEFORGE_GAME_VERSIONS="$API_RESPONSE_BODY"
+  api_request \
+    GET \
+    "${CURSEFORGE_API_BASE_URL%/}/api/game/versions" \
+    -H "X-Api-Token: $CURSEFORGE_TOKEN" \
+    -H "Accept: application/json"
+  expect_status "$API_RESPONSE_STATUS" 200
+  CURSEFORGE_GAME_VERSIONS="$API_RESPONSE_BODY"
 
-    api_request \
-      GET \
-      "${CURSEFORGE_API_BASE_URL%/}/api/game/version-types" \
-      -H "X-Api-Token: $CURSEFORGE_TOKEN" \
-      -H "Accept: application/json"
-    expect_status "$API_RESPONSE_STATUS" 200
-    CURSEFORGE_GAME_VERSION_TYPES="$API_RESPONSE_BODY"
+  api_request \
+    GET \
+    "${CURSEFORGE_API_BASE_URL%/}/api/game/version-types" \
+    -H "X-Api-Token: $CURSEFORGE_TOKEN" \
+    -H "Accept: application/json"
+  expect_status "$API_RESPONSE_STATUS" 200
+  CURSEFORGE_GAME_VERSION_TYPES="$API_RESPONSE_BODY"
 
-    loader_version_id="$(curseforge_game_version_id "$loader_name" loader)"
-    mc_version_ids=()
-    local minecraft_version
-    for minecraft_version in "${MINECRAFT_VERSIONS[@]}"; do
-      mc_version_ids+=("$(curseforge_game_version_id "$minecraft_version" minecraft)")
-    done
-    game_version_ids="$(
-      printf '%s\n' "$loader_version_id" "${mc_version_ids[@]}" |
-        jq -R 'tonumber' |
-        jq -s .
-    )"
-  else
-    game_version_ids="$(
-      printf '%s\n' 0 |
-        jq -R 'tonumber' |
-        jq -s .
-    )"
-  fi
+  loader_version_id="$(curseforge_game_version_id "$loader_name" loader)"
+  mc_version_ids=()
+  local minecraft_version
+  for minecraft_version in "${MINECRAFT_VERSIONS[@]}"; do
+    mc_version_ids+=("$(curseforge_game_version_id "$minecraft_version" minecraft)")
+  done
+  game_version_ids="$(
+    printf '%s\n' "$loader_version_id" "${mc_version_ids[@]}" |
+      jq -R 'tonumber' |
+      jq -s .
+  )"
 
   metadata="$(
     jq -cn \

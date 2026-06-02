@@ -2,6 +2,12 @@ name: Stable Build
 
 on:
   workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Validate builds and marketplace metadata without creating releases or publishing files
+        required: true
+        default: true
+        type: boolean
   push:
     tags:
       - 'v*'
@@ -175,14 +181,188 @@ jobs:
           name: ZMusic ${{ matrix.loader }} ${{ matrix.target-version }}
           path: ${{ matrix.artifact-path }}
 
+  marketplace-dry-run:
+    name: Check ${{ matrix.loader }} ${{ matrix.target-version }}
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        include:
+          - loader: Fabric
+            mod-loader: fabric
+            target-version: 26.1.2
+            supported-versions: 26.1 26.1.1 26.1.2
+            artifact-name: ZMusic Fabric 26.1.2
+          - loader: Fabric
+            mod-loader: fabric
+            target-version: 1.21.11
+            supported-versions: 1.21.6 1.21.7 1.21.8 1.21.9 1.21.10 1.21.11
+            artifact-name: ZMusic Fabric 1.21.11
+          - loader: Fabric
+            mod-loader: fabric
+            target-version: 1.21.5
+            supported-versions: 1.21 1.21.1 1.21.2 1.21.3 1.21.4 1.21.5
+            artifact-name: ZMusic Fabric 1.21.5
+          - loader: Fabric
+            mod-loader: fabric
+            target-version: 1.20.6
+            supported-versions: 1.20.5 1.20.6
+            artifact-name: ZMusic Fabric 1.20.6
+          - loader: Fabric
+            mod-loader: fabric
+            target-version: 1.20.4
+            supported-versions: 1.20.2 1.20.3 1.20.4
+            artifact-name: ZMusic Fabric 1.20.4
+          - loader: Fabric
+            mod-loader: fabric
+            target-version: 1.20.1
+            supported-versions: 1.20 1.20.1
+            artifact-name: ZMusic Fabric 1.20.1
+          - loader: Fabric
+            mod-loader: fabric
+            target-version: 1.19.4
+            supported-versions: 1.19.4
+            artifact-name: ZMusic Fabric 1.19.4
+          - loader: Fabric
+            mod-loader: fabric
+            target-version: 1.19.2
+            supported-versions: 1.19.2
+            artifact-name: ZMusic Fabric 1.19.2
+          - loader: Fabric
+            mod-loader: fabric
+            target-version: 1.18.2
+            supported-versions: 1.18.2
+            artifact-name: ZMusic Fabric 1.18.2
+          - loader: Fabric
+            mod-loader: fabric
+            target-version: 1.17.1
+            supported-versions: 1.17 1.17.1
+            artifact-name: ZMusic Fabric 1.17.1
+          - loader: Fabric
+            mod-loader: fabric
+            target-version: 1.16.5
+            supported-versions: 1.16 1.16.1 1.16.2 1.16.3 1.16.4 1.16.5
+            artifact-name: ZMusic Fabric 1.16.5
+          - loader: Fabric
+            mod-loader: fabric
+            target-version: 1.15.2
+            supported-versions: 1.15 1.15.1 1.15.2
+            artifact-name: ZMusic Fabric 1.15.2
+          - loader: Fabric
+            mod-loader: fabric
+            target-version: 1.14.4
+            supported-versions: 1.14.3 1.14.4
+            artifact-name: ZMusic Fabric 1.14.4
+          - loader: Forge
+            mod-loader: forge
+            target-version: 1.20.4
+            supported-versions: 1.20 1.20.1
+            artifact-name: ZMusic Forge 1.20.4
+          - loader: Forge
+            mod-loader: forge
+            target-version: 1.20.1
+            supported-versions: 1.20 1.20.1
+            artifact-name: ZMusic Forge 1.20.1
+          - loader: Forge
+            mod-loader: forge
+            target-version: 1.19.4
+            supported-versions: 1.19.4
+            artifact-name: ZMusic Forge 1.19.4
+          - loader: Forge
+            mod-loader: forge
+            target-version: 1.19.2
+            supported-versions: 1.19.2
+            artifact-name: ZMusic Forge 1.19.2
+          - loader: Forge
+            mod-loader: forge
+            target-version: 1.18.2
+            supported-versions: 1.18 1.18.1 1.18.2
+            artifact-name: ZMusic Forge 1.18.2
+          - loader: Forge
+            mod-loader: forge
+            target-version: 1.17.1
+            supported-versions: 1.17.1
+            artifact-name: ZMusic Forge 1.17.1
+          - loader: Forge
+            mod-loader: forge
+            target-version: 1.16.5
+            supported-versions: 1.16.1 1.16.2 1.16.3 1.16.4 1.16.5
+            artifact-name: ZMusic Forge 1.16.5
+          - loader: Forge
+            mod-loader: forge
+            target-version: 1.15.2
+            supported-versions: 1.15 1.15.1 1.15.2
+            artifact-name: ZMusic Forge 1.15.2
+          - loader: Forge
+            mod-loader: forge
+            target-version: 1.14.4
+            supported-versions: 1.14.4
+            artifact-name: ZMusic Forge 1.14.4
+          - loader: Forge
+            mod-loader: forge
+            target-version: 1.12.2
+            supported-versions: 1.12.2
+            artifact-name: ZMusic Forge 1.12.2
+          - loader: NeoForge
+            mod-loader: neoforge
+            target-version: 26.1.2
+            supported-versions: 26.1 26.1.1 26.1.2
+            artifact-name: ZMusic NeoForge 26.1.2
+          - loader: NeoForge
+            mod-loader: neoforge
+            target-version: 1.21.1
+            supported-versions: 1.21.1
+            artifact-name: ZMusic NeoForge 1.21.1
+          - loader: NeoForge
+            mod-loader: neoforge
+            target-version: 1.20.6
+            supported-versions: 1.20.5 1.20.6
+            artifact-name: ZMusic NeoForge 1.20.6
+          - loader: NeoForge
+            mod-loader: neoforge
+            target-version: 1.20.4
+            supported-versions: 1.20.2 1.20.3 1.20.4
+            artifact-name: ZMusic NeoForge 1.20.4
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download Artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: artifact
+      - name: Dry-run CurseForge and Modrinth
+        env:
+          MOD_LOADER: ${{ matrix.mod-loader }}
+          MC_VERSION: ${{ matrix.target-version }}
+          MC_VERSIONS: ${{ matrix.supported-versions }}
+          RELEASE_VERSION: ${{ github.ref_name }}
+          RELEASE_NAME: ZMusic ${{ github.ref_name }} ${{ matrix.loader }} ${{ matrix.target-version }}
+          MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          CURSEFORGE_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          DRY_RUN: true
+        run: |
+          FILE_PATH="$(find artifact -maxdepth 1 -type f -name '*.jar' -print -quit)"
+          if [ -z "$FILE_PATH" ]; then
+            echo "No jar found in artifact" >&2
+            find artifact -maxdepth 2 -type f -print >&2
+            exit 1
+          fi
+          FILE_PATH="$FILE_PATH" bash scripts/publish-marketplace-file.sh
+
+
   release:
     name: Publish GitHub release
     runs-on: ubuntu-latest
-    needs: build
+    needs:
+      - build
+      - marketplace-dry-run
+    if: ${{ github.ref_type == 'tag' && (github.event_name != 'workflow_dispatch' || inputs.dry-run == false) }}
     permissions:
       contents: write
-    outputs:
-      release-id: ${{ steps.release.outputs.id }}
     steps:
       - uses: actions/checkout@v6
       - name: Download Artifacts
@@ -198,7 +378,10 @@ jobs:
   publish-marketplaces:
     name: Publish ${{ matrix.loader }} ${{ matrix.target-version }}
     runs-on: ubuntu-latest
-    needs: release
+    needs:
+      - release
+      - marketplace-dry-run
+    if: ${{ github.ref_type == 'tag' && (github.event_name != 'workflow_dispatch' || inputs.dry-run == false) }}
     strategy:
       fail-fast: false
       max-parallel: 4
@@ -357,6 +540,7 @@ jobs:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           CURSEFORGE_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          DRY_RUN: false
         run: |
           FILE_PATH="$(find artifact -maxdepth 1 -type f -name '*.jar' -print -quit)"
           if [ -z "$FILE_PATH" ]; then
@@ -365,23 +549,3 @@ jobs:
             exit 1
           fi
           FILE_PATH="$FILE_PATH" bash scripts/publish-marketplace-file.sh
-
-  sync-release:
-    name: Sync release mirrors
-    runs-on: ubuntu-latest
-    needs:
-      - release
-      - publish-marketplaces
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
-      - name: Sync Release to Codeberg and CNB
-        env:
-          SOURCE_RELEASE_ID: ${{ needs.release.outputs.release-id }}
-          GITHUB_TOKEN: ${{ github.token }}
-          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
-          CNB_TOKEN: ${{ secrets.CNB_TOKEN }}
-          CODEBERG_REPO: zmusic-dev/zmusic-mod
-          CNB_REPO: zmusic-dev/zmusic-mod
-        run: bash scripts/sync-release.sh
