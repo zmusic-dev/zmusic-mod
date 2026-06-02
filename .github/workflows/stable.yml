@@ -356,6 +356,29 @@ jobs:
           FILE_PATH="$(realpath "$FILE_PATH")"
           FILE_PATH="$FILE_PATH" ./gradlew --project-dir builds/publish publishMarketplaceFile --no-daemon
 
+  release-mirrors-dry-run:
+    name: Check Codeberg and CNB release
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup mise
+        uses: jdx/mise-action@v4
+      - name: Download Artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: artifacts
+      - name: Dry-run Codeberg and CNB
+        env:
+          ARTIFACTS_DIR: artifacts
+          RELEASE_VERSION: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_NAME: ZMusic ${{ github.ref_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          CODEBERG_REPO: zmusic-dev/zmusic-mod
+          CNB_REPO: zmusic-dev/zmusic-mod
+          DRY_RUN: true
+        run: ./gradlew --project-dir builds/publish publishReleaseMirrors --no-daemon
 
   release:
     name: Publish GitHub release
@@ -363,6 +386,7 @@ jobs:
     needs:
       - build
       - marketplace-dry-run
+      - release-mirrors-dry-run
     if: ${{ github.ref_type == 'tag' && (github.event_name != 'workflow_dispatch' || inputs.dry-run == false) }}
     permissions:
       contents: write
@@ -555,3 +579,32 @@ jobs:
           fi
           FILE_PATH="$(realpath "$FILE_PATH")"
           FILE_PATH="$FILE_PATH" ./gradlew --project-dir builds/publish publishMarketplaceFile --no-daemon
+
+  publish-release-mirrors:
+    name: Publish Codeberg and CNB release
+    runs-on: ubuntu-latest
+    needs:
+      - release
+      - release-mirrors-dry-run
+    if: ${{ github.ref_type == 'tag' && (github.event_name != 'workflow_dispatch' || inputs.dry-run == false) }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup mise
+        uses: jdx/mise-action@v4
+      - name: Download Artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: artifacts
+      - name: Publish to Codeberg and CNB
+        env:
+          ARTIFACTS_DIR: artifacts
+          RELEASE_VERSION: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_NAME: ZMusic ${{ github.ref_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+          CNB_TOKEN: ${{ secrets.CNB_TOKEN }}
+          CODEBERG_REPO: zmusic-dev/zmusic-mod
+          CNB_REPO: zmusic-dev/zmusic-mod
+          DRY_RUN: false
+        run: ./gradlew --project-dir builds/publish publishReleaseMirrors --no-daemon

@@ -36,6 +36,23 @@ def publishApiRequest = { String method, String url, Map<String, String> headers
     [status: status, body: body]
 }
 
+def publishApiRequestWithoutBody = { String method, String url, Map<String, String> headers = [:] ->
+    def connection = (HttpURLConnection) new URL(url).openConnection()
+    connection.requestMethod = method
+    connection.instanceFollowRedirects = true
+    connection.setRequestProperty('User-Agent', 'ZMusic-Gradle-Publish')
+    headers.each { key, value ->
+        connection.setRequestProperty(key, value)
+    }
+
+    def status = connection.responseCode
+    def stream = status >= 400 ? connection.errorStream : connection.inputStream
+    def body = stream == null ? '' : stream.getText('UTF-8')
+    connection.disconnect()
+
+    [status: status, body: body]
+}
+
 def expectPublishStatus = { response, List<Integer> expected ->
     if (!expected.contains(response.status as Integer)) {
         publishMarketplaceFail("unexpected HTTP status: ${response.status}, response: ${response.body ?: '<empty>'}")
@@ -44,6 +61,17 @@ def expectPublishStatus = { response, List<Integer> expected ->
 
 def prettyPublishJson = { value ->
     groovy.json.JsonOutput.prettyPrint(value instanceof String ? value : groovy.json.JsonOutput.toJson(value))
+}
+
+def encodePublishUri = { String value ->
+    java.net.URLEncoder.encode(value, 'UTF-8').replace('+', '%20')
+}
+
+def requirePublishRepoSlug = { String slug ->
+    if (!slug.contains('/')) {
+        publishMarketplaceFail("invalid repository slug: ${slug}")
+    }
+    slug
 }
 
 def loaderDisplayName = { String loader ->
@@ -64,6 +92,18 @@ def writeMultipart = { OutputStream outputStream, String boundary, Map<String, S
             out.write("\r\n".getBytes('UTF-8'))
         }
 
+        out.write("--${boundary}\r\n".getBytes('UTF-8'))
+        out.write("Content-Disposition: form-data; name=\"${fileField}\"; filename=\"${fileName}\"\r\n".getBytes('UTF-8'))
+        out.write("Content-Type: application/java-archive\r\n\r\n".getBytes('UTF-8'))
+        file.withInputStream { input ->
+            input.transferTo(out)
+        }
+        out.write("\r\n--${boundary}--\r\n".getBytes('UTF-8'))
+    }
+}
+
+def writeFileOnlyMultipart = { OutputStream outputStream, String boundary, File file, String fileField, String fileName ->
+    outputStream.withCloseable { out ->
         out.write("--${boundary}\r\n".getBytes('UTF-8'))
         out.write("Content-Disposition: form-data; name=\"${fileField}\"; filename=\"${fileName}\"\r\n".getBytes('UTF-8'))
         out.write("Content-Type: application/java-archive\r\n\r\n".getBytes('UTF-8'))
@@ -271,6 +311,294 @@ tasks.register('publishMarketplaceFile') {
             publishMarketplaceLog('Skipping CurseForge')
         } else {
             publishMarketplaceFail('PUBLISH_CURSEFORGE must be true or false')
+        }
+    }
+}
+
+tasks.register('publishReleaseMirrors') {
+    group = 'publishing'
+    description = 'Publishes or dry-runs the stable release artifacts on Codeberg and CNB.'
+
+    doLast {
+        def artifactsDirPath = requirePublishEnv('ARTIFACTS_DIR')
+        def releaseTag = System.getenv('RELEASE_TAG') ?: requirePublishEnv('RELEASE_VERSION')
+        def releaseName = System.getenv('RELEASE_NAME') ?: releaseTag
+        def releaseBody = System.getenv('RELEASE_BODY') ?: ''
+        def releaseDraft = System.getenv('RELEASE_DRAFT') ?: 'false'
+        def releasePrerelease = System.getenv('RELEASE_PRERELEASE') ?: 'false'
+        def releaseTargetCommitish = System.getenv('RELEASE_TARGET_COMMITISH') ?: ''
+        def releaseMakeLatest = System.getenv('RELEASE_MAKE_LATEST') ?: ''
+        def codebergApiBaseUrl = System.getenv('CODEBERG_API_BASE_URL') ?: 'https://codeberg.org/api/v1'
+        def cnbApiBaseUrl = System.getenv('CNB_API_BASE_URL') ?: 'https://api.cnb.cool'
+        def publishCodeberg = System.getenv('PUBLISH_CODEBERG') ?: 'true'
+        def publishCnb = System.getenv('PUBLISH_CNB') ?: 'true'
+        def dryRun = System.getenv('DRY_RUN') ?: 'false'
+
+        if (!(dryRun in ['true', 'false'])) {
+            publishMarketplaceFail('DRY_RUN must be true or false')
+        }
+        if (!(releaseDraft in ['true', 'false'])) {
+            publishMarketplaceFail('RELEASE_DRAFT must be true or false')
+        }
+        if (!(releasePrerelease in ['true', 'false'])) {
+            publishMarketplaceFail('RELEASE_PRERELEASE must be true or false')
+        }
+
+        def artifactsDir = new File(artifactsDirPath)
+        if (!artifactsDir.isDirectory()) {
+            publishMarketplaceFail("artifacts directory does not exist: ${artifactsDirPath}")
+        }
+        def artifactFiles = fileTree(artifactsDir) {
+            include '**/*.jar'
+        }.files.sort { it.name }
+        if (artifactFiles.isEmpty()) {
+            publishMarketplaceFail("no jar artifacts found in: ${artifactsDirPath}")
+        }
+
+        def releasePayload = [
+                tag_name  : releaseTag,
+                name      : releaseName,
+                body      : releaseBody,
+                draft     : releaseDraft == 'true',
+                prerelease: releasePrerelease == 'true'
+        ]
+        def cnbCreatePayload = new LinkedHashMap(releasePayload)
+        if (!releaseTargetCommitish.isBlank()) {
+            cnbCreatePayload.target_commitish = releaseTargetCommitish
+        }
+        if (!releaseMakeLatest.isBlank()) {
+            cnbCreatePayload.make_latest = releaseMakeLatest
+        }
+        def cnbUpdatePayload = [
+                name      : releaseName,
+                body      : releaseBody,
+                draft     : releaseDraft == 'true',
+                prerelease: releasePrerelease == 'true'
+        ]
+        if (!releaseMakeLatest.isBlank()) {
+            cnbUpdatePayload.make_latest = releaseMakeLatest
+        }
+
+        publishMarketplaceLog("Release mirror artifacts: ${artifactFiles.size()}")
+        artifactFiles.each {
+            publishMarketplaceLog(" - ${it.name}")
+        }
+        def artifactFileNames = artifactFiles.collect { it.name } as Set
+
+        if (publishCodeberg == 'true') {
+            def codebergRepo = requirePublishRepoSlug(System.getenv('CODEBERG_REPO') ?: requirePublishEnv('GITHUB_REPOSITORY'))
+            def owner = encodePublishUri(codebergRepo.substring(0, codebergRepo.indexOf('/')))
+            def repo = encodePublishUri(codebergRepo.substring(codebergRepo.indexOf('/') + 1))
+            def basePath = "/repos/${owner}/${repo}"
+
+            if (dryRun == 'true') {
+                publishMarketplaceLog("DRY_RUN Codeberg release ${releaseTag} in ${codebergRepo}:")
+                println(prettyPublishJson(releasePayload))
+            } else {
+                def codebergToken = requirePublishEnv('CODEBERG_TOKEN')
+                def headers = ['Authorization': "token ${codebergToken}", 'Accept': 'application/json']
+                def enablePayloadJson = groovy.json.JsonOutput.toJson([has_releases: true])
+                def response = publishApiRequest(
+                        'PATCH',
+                        "${codebergApiBaseUrl.replaceAll('/+$', '')}${basePath}",
+                        headers + ['Content-Type': 'application/json']
+                ) { OutputStream out ->
+                    out.write(enablePayloadJson.getBytes('UTF-8'))
+                }
+                expectPublishStatus(response, [200])
+
+                def tagPath = "${basePath}/releases/tags/${encodePublishUri(releaseTag)}"
+                response = publishApiRequestWithoutBody('GET', "${codebergApiBaseUrl.replaceAll('/+$', '')}${tagPath}", headers)
+                def releaseJson
+                def payloadJson = groovy.json.JsonOutput.toJson(releasePayload)
+
+                if (response.status == 404) {
+                    response = publishApiRequest(
+                            'POST',
+                            "${codebergApiBaseUrl.replaceAll('/+$', '')}${basePath}/releases",
+                            headers + ['Content-Type': 'application/json']
+                    ) { OutputStream out ->
+                        out.write(payloadJson.getBytes('UTF-8'))
+                    }
+                    expectPublishStatus(response, [201])
+                    publishMarketplaceLog("Codeberg release created: ${releaseTag}")
+                    releaseJson = new groovy.json.JsonSlurper().parseText(response.body)
+                } else {
+                    expectPublishStatus(response, [200])
+                    releaseJson = new groovy.json.JsonSlurper().parseText(response.body)
+                    response = publishApiRequest(
+                            'PATCH',
+                            "${codebergApiBaseUrl.replaceAll('/+$', '')}${basePath}/releases/${encodePublishUri(String.valueOf(releaseJson.id))}",
+                            headers + ['Content-Type': 'application/json']
+                    ) { OutputStream out ->
+                        out.write(payloadJson.getBytes('UTF-8'))
+                    }
+                    expectPublishStatus(response, [200])
+                    publishMarketplaceLog("Codeberg release updated: ${releaseTag}")
+                    releaseJson = new groovy.json.JsonSlurper().parseText(response.body)
+                }
+
+                def releaseId = String.valueOf(releaseJson.id)
+                response = publishApiRequestWithoutBody(
+                        'GET',
+                        "${codebergApiBaseUrl.replaceAll('/+$', '')}${basePath}/releases/${encodePublishUri(releaseId)}/assets",
+                        headers
+                )
+                expectPublishStatus(response, [200])
+                def assets = new groovy.json.JsonSlurper().parseText(response.body) as List
+                assets.findAll { !artifactFileNames.contains(it.name) }.each { asset ->
+                    publishMarketplaceLog("Deleting extra Codeberg asset: ${asset.name}")
+                    response = publishApiRequestWithoutBody(
+                            'DELETE',
+                            "${codebergApiBaseUrl.replaceAll('/+$', '')}${basePath}/releases/${encodePublishUri(releaseId)}/assets/${encodePublishUri(String.valueOf(asset.id))}",
+                            headers
+                    )
+                    expectPublishStatus(response, [204])
+                }
+
+                artifactFiles.each { file ->
+                    def existing = assets.find { it.name == file.name }
+                    if (existing != null) {
+                        publishMarketplaceLog("Deleting existing Codeberg asset: ${file.name}")
+                        response = publishApiRequestWithoutBody(
+                                'DELETE',
+                                "${codebergApiBaseUrl.replaceAll('/+$', '')}${basePath}/releases/${encodePublishUri(releaseId)}/assets/${encodePublishUri(String.valueOf(existing.id))}",
+                                headers
+                        )
+                        expectPublishStatus(response, [204])
+                    }
+
+                    publishMarketplaceLog("Uploading Codeberg asset: ${file.name}")
+                    def boundary = "----ZMusicGradle${System.nanoTime()}"
+                    response = publishApiRequest(
+                            'POST',
+                            "${codebergApiBaseUrl.replaceAll('/+$', '')}${basePath}/releases/${encodePublishUri(releaseId)}/assets?name=${encodePublishUri(file.name)}",
+                            headers + ['Content-Type': "multipart/form-data; boundary=${boundary}"]
+                    ) { OutputStream out ->
+                        writeFileOnlyMultipart(out, boundary, file, 'attachment', file.name)
+                    }
+                    expectPublishStatus(response, [201])
+                }
+            }
+        } else if (publishCodeberg == 'false') {
+            publishMarketplaceLog('Skipping Codeberg')
+        } else {
+            publishMarketplaceFail('PUBLISH_CODEBERG must be true or false')
+        }
+
+        if (publishCnb == 'true') {
+            def cnbRepo = requirePublishRepoSlug(System.getenv('CNB_REPO') ?: requirePublishEnv('GITHUB_REPOSITORY'))
+            def owner = encodePublishUri(cnbRepo.substring(0, cnbRepo.indexOf('/')))
+            def repo = encodePublishUri(cnbRepo.substring(cnbRepo.indexOf('/') + 1))
+            def repoPath = "/${owner}/${repo}"
+
+            if (dryRun == 'true') {
+                publishMarketplaceLog("DRY_RUN CNB release ${releaseTag} in ${cnbRepo}:")
+                println(prettyPublishJson(cnbCreatePayload))
+            } else {
+                def cnbToken = requirePublishEnv('CNB_TOKEN')
+                def headers = ['Authorization': "Bearer ${cnbToken}", 'Accept': 'application/vnd.cnb.api+json']
+                def response = publishApiRequestWithoutBody(
+                        'GET',
+                        "${cnbApiBaseUrl.replaceAll('/+$', '')}${repoPath}/-/releases/tags/${encodePublishUri(releaseTag)}",
+                        headers
+                )
+                def releaseJson
+                if (response.status == 404) {
+                    response = publishApiRequest(
+                            'POST',
+                            "${cnbApiBaseUrl.replaceAll('/+$', '')}${repoPath}/-/releases",
+                            headers + ['Content-Type': 'application/json']
+                    ) { OutputStream out ->
+                        out.write(groovy.json.JsonOutput.toJson(cnbCreatePayload).getBytes('UTF-8'))
+                    }
+                    expectPublishStatus(response, [201])
+                    publishMarketplaceLog("CNB release created: ${releaseTag}")
+                    releaseJson = new groovy.json.JsonSlurper().parseText(response.body)
+                } else {
+                    expectPublishStatus(response, [200])
+                    releaseJson = new groovy.json.JsonSlurper().parseText(response.body)
+                    response = publishApiRequest(
+                            'PATCH',
+                            "${cnbApiBaseUrl.replaceAll('/+$', '')}${repoPath}/-/releases/${encodePublishUri(String.valueOf(releaseJson.id))}",
+                            headers + ['Content-Type': 'application/json']
+                    ) { OutputStream out ->
+                        out.write(groovy.json.JsonOutput.toJson(cnbUpdatePayload).getBytes('UTF-8'))
+                    }
+                    expectPublishStatus(response, [200])
+                    publishMarketplaceLog("CNB release updated: ${releaseTag}")
+                    response = publishApiRequestWithoutBody(
+                            'GET',
+                            "${cnbApiBaseUrl.replaceAll('/+$', '')}${repoPath}/-/releases/${encodePublishUri(String.valueOf(releaseJson.id))}",
+                            headers
+                    )
+                    expectPublishStatus(response, [200])
+                    releaseJson = new groovy.json.JsonSlurper().parseText(response.body)
+                }
+
+                def releaseId = String.valueOf(releaseJson.id)
+                (releaseJson.assets ?: []).findAll { !artifactFileNames.contains(it.name) }.each { asset ->
+                    publishMarketplaceLog("Deleting extra CNB asset: ${asset.name}")
+                    response = publishApiRequestWithoutBody(
+                            'DELETE',
+                            "${cnbApiBaseUrl.replaceAll('/+$', '')}${repoPath}/-/releases/${encodePublishUri(releaseId)}/assets/${encodePublishUri(String.valueOf(asset.id))}",
+                            headers
+                    )
+                    expectPublishStatus(response, [200])
+                }
+
+                artifactFiles.each { file ->
+                    def uploadPayload = [
+                            asset_name: file.name,
+                            overwrite : true,
+                            size      : file.length(),
+                            ttl       : 0
+                    ]
+                    response = publishApiRequest(
+                            'POST',
+                            "${cnbApiBaseUrl.replaceAll('/+$', '')}${repoPath}/-/releases/${encodePublishUri(releaseId)}/asset-upload-url",
+                            headers + ['Content-Type': 'application/json']
+                    ) { OutputStream out ->
+                        out.write(groovy.json.JsonOutput.toJson(uploadPayload).getBytes('UTF-8'))
+                    }
+                    expectPublishStatus(response, [201])
+                    def uploadJson = new groovy.json.JsonSlurper().parseText(response.body)
+                    def uploadUrl = String.valueOf(uploadJson.upload_url ?: '')
+                    def verifyUrl = String.valueOf(uploadJson.verify_url ?: '')
+                    if (uploadUrl.isBlank() || verifyUrl.isBlank()) {
+                        publishMarketplaceFail("CNB upload url response is incomplete: ${response.body ?: '<empty>'}")
+                    }
+                    if (!uploadUrl.startsWith('http://') && !uploadUrl.startsWith('https://')) {
+                        uploadUrl = "${cnbApiBaseUrl.replaceAll('/+$', '')}${uploadUrl}"
+                    }
+                    if (!verifyUrl.startsWith('http://') && !verifyUrl.startsWith('https://')) {
+                        verifyUrl = "${cnbApiBaseUrl.replaceAll('/+$', '')}${verifyUrl}"
+                    }
+                    verifyUrl = verifyUrl.contains('?') ? "${verifyUrl}&ttl=0" : "${verifyUrl}?ttl=0"
+
+                    publishMarketplaceLog("Uploading CNB asset: ${file.name}")
+                    def uploadConnection = (HttpURLConnection) new URL(uploadUrl).openConnection()
+                    uploadConnection.requestMethod = 'PUT'
+                    uploadConnection.doOutput = true
+                    file.withInputStream { input ->
+                        uploadConnection.outputStream.withCloseable { out ->
+                            input.transferTo(out)
+                        }
+                    }
+                    def uploadStatus = uploadConnection.responseCode
+                    uploadConnection.disconnect()
+                    if (!(uploadStatus in [200, 201, 204])) {
+                        publishMarketplaceFail("unexpected CNB upload status: ${uploadStatus} for ${file.name}")
+                    }
+
+                    response = publishApiRequestWithoutBody('POST', verifyUrl, headers)
+                    expectPublishStatus(response, [200])
+                }
+            }
+        } else if (publishCnb == 'false') {
+            publishMarketplaceLog('Skipping CNB')
+        } else {
+            publishMarketplaceFail('PUBLISH_CNB must be true or false')
         }
     }
 }
