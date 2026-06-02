@@ -313,25 +313,30 @@ jobs:
             mc-version: 1.20.4
             artifact-name: ZMusic NeoForge 1.20.4
     steps:
+      - uses: actions/checkout@v6
       - name: Download Artifact
         uses: actions/download-artifact@v7
         with:
           name: ${{ matrix.artifact-name }}
           path: artifact
       - name: Publish to CurseForge and Modrinth
-        uses: Kir-Antipov/mc-publish@v3.3.0
-        with:
-          curseforge-id: ${{ vars.CURSEFORGE_PROJECT_ID }}
-          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
-          modrinth-id: ${{ vars.MODRINTH_PROJECT_ID }}
-          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-          name: ZMusic ${{ github.ref_name }} ${{ matrix.loader }} ${{ matrix.mc-version }}
-          version: ${{ github.ref_name }}
-          files: artifact/**/*.jar
-          loaders: ${{ matrix.mod-loader }}
-          game-versions: ${{ matrix.mc-version }}
-          version-type: release
-          retry-attempts: 3
+        env:
+          MOD_LOADER: ${{ matrix.mod-loader }}
+          MC_VERSION: ${{ matrix.mc-version }}
+          RELEASE_VERSION: ${{ github.ref_name }}
+          RELEASE_NAME: ZMusic ${{ github.ref_name }} ${{ matrix.loader }} ${{ matrix.mc-version }}
+          MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          CURSEFORGE_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+        run: |
+          FILE_PATH="$(find artifact -maxdepth 1 -type f -name '*.jar' -print -quit)"
+          if [ -z "$FILE_PATH" ]; then
+            echo "No jar found in artifact" >&2
+            find artifact -maxdepth 2 -type f -print >&2
+            exit 1
+          fi
+          FILE_PATH="$FILE_PATH" bash scripts/publish-marketplace-file.sh
 
   sync-release:
     name: Sync release mirrors
