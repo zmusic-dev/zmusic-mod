@@ -19,7 +19,7 @@ public class ForgeEvent {
 
     @SubscribeEvent
     public void onSound(final SoundEvent.SoundSourceEvent e) {
-        if (ZMusic.getPlayer().getState() != ZMusicPlayer.STATE_PLAYING) {
+        if (ZMusic.getPlayer().getState() != ZMusicPlayer.STATE_PLAYING || e.getSound() == null) {
             return;
         }
         SoundCategory data = e.getSound().getSource();
