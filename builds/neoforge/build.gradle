@@ -116,7 +116,7 @@ subprojects {
     apply plugin: 'java-library'
 
     group = "me.zhenxin"
-    version = "3.7.0"
+    version = "3.7.1"
 
     dependencies {
         compileOnly("org.projectlombok:lombok:1.18.46")
