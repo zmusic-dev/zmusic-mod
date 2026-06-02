@@ -206,10 +206,17 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
             .gradle/zmusic-player
+            builds/forge/.gradle/mavenizer
           key: ${{ runner.os }}-gradle-${{ matrix.project }}-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties', 'mise.toml') }}
           restore-keys: |
             ${{ runner.os }}-gradle-${{ matrix.project }}-
             ${{ runner.os }}-gradle-
+      - name: Warm Forge 1.12.2 classpath
+        if: matrix.project == 'zmusic-forge-1.12.2'
+        run: |
+          ./gradlew --project-dir "${{ matrix.build-dir }}" ":${{ matrix.project }}:dependencies" --configuration compileClasspath --no-daemon \
+            -Pzmusic.project="${{ matrix.project }}" \
+            -Porg.gradle.java.installations.paths="$(mise where java@temurin-8),$(mise where java@temurin-16),$(mise where java@temurin-17),$(mise where java@temurin-21),$(mise where java@temurin-25)"
       - name: Build ${{ matrix.loader }} ${{ matrix.target-version }}
         run: |
           ./gradlew --project-dir "${{ matrix.build-dir }}" ":${{ matrix.project }}:build" --no-daemon \
