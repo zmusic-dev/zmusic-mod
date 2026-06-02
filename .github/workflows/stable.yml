@@ -370,7 +370,6 @@ jobs:
           path: artifacts
       - name: Dry-run Codeberg and CNB
         env:
-          ARTIFACTS_DIR: artifacts
           RELEASE_VERSION: ${{ github.ref_name }}
           RELEASE_TAG: ${{ github.ref_name }}
           RELEASE_NAME: ZMusic ${{ github.ref_name }}
@@ -378,7 +377,8 @@ jobs:
           CODEBERG_REPO: zmusic-dev/zmusic-mod
           CNB_REPO: zmusic-dev/zmusic-mod
           DRY_RUN: true
-        run: ./gradlew --project-dir builds/publish publishReleaseMirrors --no-daemon
+        run: |
+          ARTIFACTS_DIR="$(realpath artifacts)" ./gradlew --project-dir builds/publish publishReleaseMirrors --no-daemon
 
   release:
     name: Publish GitHub release
@@ -597,7 +597,6 @@ jobs:
           path: artifacts
       - name: Publish to Codeberg and CNB
         env:
-          ARTIFACTS_DIR: artifacts
           RELEASE_VERSION: ${{ github.ref_name }}
           RELEASE_TAG: ${{ github.ref_name }}
           RELEASE_NAME: ZMusic ${{ github.ref_name }}
@@ -607,4 +606,5 @@ jobs:
           CODEBERG_REPO: zmusic-dev/zmusic-mod
           CNB_REPO: zmusic-dev/zmusic-mod
           DRY_RUN: false
-        run: ./gradlew --project-dir builds/publish publishReleaseMirrors --no-daemon
+        run: |
+          ARTIFACTS_DIR="$(realpath artifacts)" ./gradlew --project-dir builds/publish publishReleaseMirrors --no-daemon
