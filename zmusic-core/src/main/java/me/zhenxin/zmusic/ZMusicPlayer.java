@@ -13,6 +13,10 @@ import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * ZMusic Player JNI 桥接
@@ -32,6 +36,16 @@ public class ZMusicPlayer {
 
     private long handle;
     private Thread pollingThread;
+    private final Object nativeCallLock = new Object();
+    private final ExecutorService commandExecutor = Executors.newSingleThreadExecutor(new ThreadFactory() {
+        @Override
+        public Thread newThread(Runnable runnable) {
+            Thread thread = new Thread(runnable, "zmusic-command");
+            thread.setDaemon(true);
+            return thread;
+        }
+    });
+    private volatile float currentVolume = -1.0f;
 
     // ---- Native 方法声明 ----
 
@@ -123,6 +137,7 @@ public class ZMusicPlayer {
      */
     public synchronized void destroy() {
         running = false;
+        commandExecutor.shutdownNow();
         Thread thread = pollingThread;
         if (thread != null) {
             if (thread != Thread.currentThread()) {
@@ -142,7 +157,9 @@ public class ZMusicPlayer {
             pollingThread = null;
         }
         if (handle != 0) {
-            nativeDestroy(handle);
+            synchronized (nativeCallLock) {
+                nativeDestroy(handle);
+            }
             handle = 0;
         }
     }
@@ -154,6 +171,29 @@ public class ZMusicPlayer {
      * @return 0 表示成功，非零表示错误码
      */
     public int play(String url) { return nativePlay(handle, url); }
+
+    /**
+     * 在播放器线程中停止当前曲目并播放新 URL，避免阻塞 Minecraft 客户端线程。
+     */
+    public void playAsync(final String url) {
+        executeCommand(new Runnable() {
+            @Override
+            public void run() {
+                if (!running || handle == 0) {
+                    return;
+                }
+                synchronized (nativeCallLock) {
+                    nativeStop(handle);
+                }
+                if (!running || handle == 0) {
+                    return;
+                }
+                synchronized (nativeCallLock) {
+                    nativePlay(handle, url);
+                }
+            }
+        });
+    }
 
     /**
      * 暂停当前播放。
@@ -168,6 +208,23 @@ public class ZMusicPlayer {
      * @return 0 表示成功，非零表示错误码
      */
     public int stop() { return nativeStop(handle); }
+
+    /**
+     * 在播放器线程中停止播放。
+     */
+    public void stopAsync() {
+        executeCommand(new Runnable() {
+            @Override
+            public void run() {
+                if (!running || handle == 0) {
+                    return;
+                }
+                synchronized (nativeCallLock) {
+                    nativeStop(handle);
+                }
+            }
+        });
+    }
 
     /**
      * 恢复已暂停的播放。
@@ -211,7 +268,31 @@ public class ZMusicPlayer {
      *
      * @return 0 表示成功，非零表示错误码
      */
-    public int setVolume(float volume) { return nativeSetVolume(handle, volume); }
+    public int setVolume(final float volume) {
+        if (Float.compare(currentVolume, volume) == 0) {
+            return 0;
+        }
+        currentVolume = volume;
+        executeCommand(new Runnable() {
+            @Override
+            public void run() {
+                if (!running || handle == 0) {
+                    return;
+                }
+                synchronized (nativeCallLock) {
+                    nativeSetVolume(handle, volume);
+                }
+            }
+        });
+        return 0;
+    }
+
+    private void executeCommand(Runnable command) {
+        try {
+            commandExecutor.execute(command);
+        } catch (RejectedExecutionException ignored) {
+        }
+    }
 
     /**
      * 将曲目追加到播放队列末尾。

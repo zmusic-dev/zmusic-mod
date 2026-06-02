@@ -35,7 +35,7 @@ public class ForgeEvent {
     @SubscribeEvent
     public void onServerQuit(final ClientPlayerNetworkEvent.LoggedOutEvent e) {
         try {
-            ZMusic.getPlayer().stop();
+            ZMusic.getPlayer().stopAsync();
         } catch (Exception e1) {
             e1.printStackTrace();
         }

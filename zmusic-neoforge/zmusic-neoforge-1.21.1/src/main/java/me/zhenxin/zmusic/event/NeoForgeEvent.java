@@ -35,7 +35,7 @@ public class NeoForgeEvent {
     @SubscribeEvent
     public void onServerQuit(final ClientPlayerNetworkEvent.LoggingOut event) {
         try {
-            ZMusic.getPlayer().stop();
+            ZMusic.getPlayer().stopAsync();
         } catch (Exception e) {
             e.printStackTrace();
         }

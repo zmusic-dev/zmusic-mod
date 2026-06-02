@@ -34,7 +34,7 @@ public class ForgeEvent {
 
     @SubscribeEvent
     public void onServerQuit(final FMLNetworkEvent.ClientDisconnectionFromServerEvent e) {
-        ZMusic.getPlayer().stop();
+        ZMusic.getPlayer().stopAsync();
     }
 
 
