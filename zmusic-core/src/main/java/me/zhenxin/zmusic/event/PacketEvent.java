@@ -16,11 +16,29 @@ class PacketEvent {
 
     public static void onPlay(String data) {
         log.info("Play music from {}", data);
-        ZMusic.getSoundManager().stop();
+        if (data == null || data.trim().isEmpty()) {
+            log.warn("Ignored empty ZMusic play url");
+            return;
+        }
+        if (ZMusic.getSoundManager() == null) {
+            log.warn("ZMusic SoundManager is not initialized");
+        } else {
+            log.info("Stopping vanilla music before ZMusic playback");
+            ZMusic.getSoundManager().stop();
+        }
+        if (ZMusic.getPlayer() == null) {
+            log.warn("ZMusic player is not initialized");
+            return;
+        }
         ZMusic.getPlayer().playAsync(data);
     }
 
     public static void onStop() {
+        log.info("Stop ZMusic playback");
+        if (ZMusic.getPlayer() == null) {
+            log.warn("ZMusic player is not initialized");
+            return;
+        }
         ZMusic.getPlayer().stopAsync();
     }
 

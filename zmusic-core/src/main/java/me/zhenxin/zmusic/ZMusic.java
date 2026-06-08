@@ -30,6 +30,31 @@ public class ZMusic {
             player.destroy();
         }
         player = new ZMusicPlayer();
+        player.setEventListener(new ZMusicPlayer.EventListener() {
+            @Override
+            public void onStateChanged(int state) {
+                log.info("ZMusic native player state changed: {}", state);
+            }
+
+            @Override
+            public void onTrackEnded() {
+                log.info("ZMusic native track ended");
+            }
+
+            @Override
+            public void onProgress(long positionMs, long durationMs) {
+            }
+
+            @Override
+            public void onError(String message) {
+                log.warn("ZMusic native player error: {}", message);
+            }
+
+            @Override
+            public void onBuffering(boolean buffering) {
+                log.info("ZMusic native player buffering: {}", buffering);
+            }
+        });
         registerShutdownHook();
         log.info("Welcome use ZMusic!");
         log.info("Homepage: https://m.zplu.cc");

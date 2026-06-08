@@ -1,5 +1,7 @@
 package me.zhenxin.zmusic;
 
+import lombok.extern.log4j.Log4j2;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +29,7 @@ import java.util.concurrent.ThreadFactory;
  * @author 真心
  * @since 2026-04-24 00:00
  */
+@Log4j2
 public class ZMusicPlayer {
 
     private static final String NATIVE_RESOURCE_ROOT = "META-INF/native";
@@ -123,6 +126,7 @@ public class ZMusicPlayer {
         if (handle == 0) {
             throw new RuntimeException("ZMusicPlayer 初始化失败");
         }
+        log.info("ZMusic native player initialized, state={}", nativeGetState(handle));
     }
 
     /**
@@ -183,13 +187,24 @@ public class ZMusicPlayer {
                     return;
                 }
                 synchronized (nativeCallLock) {
-                    nativeStop(handle);
+                    int stopResult = nativeStop(handle);
+                    if (stopResult != 0) {
+                        log.warn("ZMusic nativeStop before play returned {}", stopResult);
+                    }
                 }
                 if (!running || handle == 0) {
                     return;
                 }
                 synchronized (nativeCallLock) {
-                    nativePlay(handle, url);
+                    int stateBeforePlay = nativeGetState(handle);
+                    log.info("Calling ZMusic nativePlay, stateBefore={}, url={}", stateBeforePlay, url);
+                    int playResult = nativePlay(handle, url);
+                    int stateAfterPlay = nativeGetState(handle);
+                    if (playResult != 0) {
+                        log.warn("ZMusic nativePlay returned {} for {}, stateAfter={}", playResult, url, stateAfterPlay);
+                    } else {
+                        log.info("ZMusic nativePlay accepted {}, stateAfter={}", url, stateAfterPlay);
+                    }
                 }
             }
         });
@@ -220,7 +235,10 @@ public class ZMusicPlayer {
                     return;
                 }
                 synchronized (nativeCallLock) {
-                    nativeStop(handle);
+                    int stopResult = nativeStop(handle);
+                    if (stopResult != 0) {
+                        log.warn("ZMusic nativeStop returned {}", stopResult);
+                    }
                 }
             }
         });
@@ -273,6 +291,7 @@ public class ZMusicPlayer {
             return 0;
         }
         currentVolume = volume;
+        log.info("Queue ZMusic native volume change: {}", volume);
         executeCommand(new Runnable() {
             @Override
             public void run() {
@@ -280,7 +299,10 @@ public class ZMusicPlayer {
                     return;
                 }
                 synchronized (nativeCallLock) {
-                    nativeSetVolume(handle, volume);
+                    int volumeResult = nativeSetVolume(handle, volume);
+                    if (volumeResult != 0) {
+                        log.warn("ZMusic nativeSetVolume returned {} for {}", volumeResult, volume);
+                    }
                 }
             }
         });
@@ -291,6 +313,7 @@ public class ZMusicPlayer {
         try {
             commandExecutor.execute(command);
         } catch (RejectedExecutionException ignored) {
+            log.warn("ZMusic native command rejected");
         }
     }
 
@@ -433,6 +456,7 @@ public class ZMusicPlayer {
                         currentListener.onProgress(nativeGetPosition(handle), nativeGetDuration(handle));
                     } else if (event == EVENT_ERROR) {
                         currentListener.onError("播放错误");
+                        log.warn("ZMusic native player reported playback error");
                     } else if (event == EVENT_BUFFERING) {
                         currentListener.onBuffering(true);
                     }
@@ -461,6 +485,7 @@ public class ZMusicPlayer {
     private static void loadNativeLibrary() {
         try {
             System.loadLibrary("zmusic");
+            log.info("Loaded ZMusic native library from java.library.path");
             return;
         } catch (UnsatisfiedLinkError ignored) {
         }
@@ -479,6 +504,7 @@ public class ZMusicPlayer {
             Path libFile = libDir.resolve(getHashedLibName(libName, hash));
             writeNativeLibraryIfAbsent(libDir, libFile, libBytes, hash);
             System.load(libFile.toString());
+            log.info("Loaded bundled ZMusic native library: {}", libFile);
         } catch (IOException | NoSuchAlgorithmException e) {
             throw new RuntimeException("Failed to extract native library", e);
         }
