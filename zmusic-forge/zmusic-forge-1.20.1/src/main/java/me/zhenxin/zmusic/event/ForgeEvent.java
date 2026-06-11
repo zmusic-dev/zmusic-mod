@@ -1,5 +1,6 @@
 package me.zhenxin.zmusic.event;
 
+import lombok.extern.log4j.Log4j2;
 import me.zhenxin.zmusic.ZMusic;
 import me.zhenxin.zmusic.ZMusicPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -15,7 +16,10 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
  * @email qgzhenxin@qq.com
  * @since 2023/3/17 11:17
  */
+@Log4j2
 public class ForgeEvent {
+
+    private boolean tickSyncDisabled;
 
     @SubscribeEvent
     public void onSound(final SoundEvent.SoundSourceEvent e) {
@@ -45,6 +49,15 @@ public class ForgeEvent {
 
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
-        ZMusic.getPlayer().setVolume(ZMusic.getSoundManager().volume());
+        if (tickSyncDisabled) {
+            return;
+        }
+        try {
+            ZMusic.getPlayer().setVolume(ZMusic.getSoundManager().volume());
+        } catch (Throwable t) {
+            tickSyncDisabled = true;
+            log.error("ZMusic failed to sync volume on client tick, disabling further attempts. " +
+                    "This is likely caused by another mod conflicting with Minecraft's class structure.", t);
+        }
     }
 }
