@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "[47,)"
+loaderVersion = "[49,)"
 license = "GPL-3.0-only"
 issueTrackerURL = "https://github.com/zmusic-dev/zmusic-mod/issues"
 [[mods]]
@@ -13,12 +13,12 @@ authors = "ZhenXin"
 [[dependencies.zmusic]]
 modId = "forge"
 mandatory = true
-versionRange = "[47,)"
+versionRange = "[49,)"
 ordering = "NONE"
 side = "CLIENT"
 [[dependencies.zmusic]]
 modId = "minecraft"
 mandatory = true
-versionRange = "[1.20,1.20.2)"
+versionRange = "[1.20.4,1.20.5)"
 ordering = "NONE"
 side = "CLIENT"
