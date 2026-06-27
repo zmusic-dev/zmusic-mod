@@ -14,12 +14,20 @@ public class SoundManagerImpl implements SoundManager {
 
     @Override
     public float volume() {
-        return Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.RECORDS);
+        try {
+            return Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.RECORDS);
+        } catch (LinkageError e) {
+            return MinecraftSoundAccess.getRecordsVolume();
+        }
     }
 
     @Override
     public void stop() {
-        Minecraft.getInstance().getSoundManager().stop(null, SoundSource.MUSIC);
-        Minecraft.getInstance().getSoundManager().stop(null, SoundSource.RECORDS);
+        try {
+            Minecraft.getInstance().getSoundManager().stop(null, SoundSource.MUSIC);
+            Minecraft.getInstance().getSoundManager().stop(null, SoundSource.RECORDS);
+        } catch (LinkageError e) {
+            MinecraftSoundAccess.stopMusicAndRecords();
+        }
     }
 }
