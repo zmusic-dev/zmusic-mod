@@ -34,7 +34,7 @@ tasks.register('downloadNativeLibs') {
         }
         outDir.mkdirs()
 
-        def apiUrl = "https://api.github.com/repos/zmusic-dev/zmusic-player/releases/tags/v${zmusicPlayerVersion}"
+        def apiUrl = "https://api.github.com/repos/starhui-dev/zmusic-player/releases/tags/v${zmusicPlayerVersion}"
         def conn = new URL(apiUrl).openConnection()
         conn.setRequestProperty('Accept', 'application/vnd.github+json')
         conn.setRequestProperty('User-Agent', 'ZMusic-Gradle-Build')

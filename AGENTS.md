@@ -60,7 +60,7 @@ mise run clean
 
 ### 原生库打包
 
-`downloadNativeLibs` 任务从 `zmusic-dev/zmusic-player` 的 GitHub Release（tag `v${zmusicPlayerVersion}`，版本在 `gradle.properties`）拉取四个平台的 native 库，解压缓存到 `.gradle/zmusic-player/`，叶子项目打 jar 时塞进 `META-INF/native/`。**构建联网**，受 GitHub API 限流影响。
+`downloadNativeLibs` 任务从 `starhui-dev/zmusic-player` 的 GitHub Release（tag `v${zmusicPlayerVersion}`，版本在 `gradle.properties`）拉取四个平台的 native 库，解压缓存到 `.gradle/zmusic-player/`，叶子项目打 jar 时塞进 `META-INF/native/`。**构建联网**，受 GitHub API 限流影响。
 
 ## 约定与陷阱
 

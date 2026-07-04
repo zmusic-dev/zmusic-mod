@@ -9,8 +9,8 @@
   ],
   "contact": {
     "homepage": "https://zmusic.zhenxin.me",
-    "sources": "https://github.com/zmusic-dev/zmusic-mod",
-    "issues": "https://github.com/zmusic-dev/zmusic-mod/issues",
+    "sources": "https://github.com/starhui-dev/zmusic-mod",
+    "issues": "https://github.com/starhui-dev/zmusic-mod/issues",
     "discord": "https://discord.gg/twQgJNufYn"
   },
   "license": "GPL-3.0",

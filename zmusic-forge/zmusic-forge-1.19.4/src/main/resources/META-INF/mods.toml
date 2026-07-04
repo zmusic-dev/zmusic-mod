@@ -1,7 +1,7 @@
 modLoader = "javafml"
 loaderVersion = "[45,)"
 license = "GPL-3.0-only"
-issueTrackerURL = "https://github.com/zmusic-dev/zmusic-mod/issues"
+issueTrackerURL = "https://github.com/starhui-dev/zmusic-mod/issues"
 [[mods]]
 modId = "zmusic"
 version = "${version}"
