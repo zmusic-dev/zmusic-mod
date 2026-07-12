@@ -1,8 +1,13 @@
 plugins {
-    id 'com.gtnewhorizons.retrofuturagradle' version '1.4.0'
+    id 'com.gtnewhorizons.retrofuturagradle' version '1.4.9'
 }
 
 description = 'Forge 1.7.10 adapter for ZMusic.'
+
+dependencies {
+    compileOnly 'org.jetbrains.kotlin:kotlin-stdlib:2.2.21'
+    runtimeOnly 'maven.modrinth:forgelin-legacy:2.4.0-2.2.21'
+}
 
 java {
     toolchain {

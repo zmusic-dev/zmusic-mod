@@ -1,5 +1,6 @@
 plugins {
     id 'base'
+    id 'org.jetbrains.kotlin.jvm' version '2.2.21' apply false
 }
 
 def sharedProps = new Properties()
@@ -21,6 +22,13 @@ allprojects {
                 artifact()
             }
         }
+        maven {
+            name = 'Modrinth'
+            url = 'https://api.modrinth.com/maven'
+            content {
+                includeGroup 'maven.modrinth'
+            }
+        }
         mavenLocal()
         mavenCentral()
     }
@@ -28,6 +36,7 @@ allprojects {
 
 subprojects {
     apply plugin: 'java-library'
+    apply plugin: 'org.jetbrains.kotlin.jvm'
 
     dependencies {
         implementation "me.zhenxin:zmusic-shared:${rootProject.version}"
@@ -56,5 +65,9 @@ subprojects {
 
     tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
+    }
+
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
     }
 }

@@ -8,6 +8,6 @@
     "url": "${modHomepageUrl}",
     "credits": "",
     "authorList": ["${modAuthor}"],
-    "dependencies": []
+    "dependencies": ["forgelin"]
   }
 ]

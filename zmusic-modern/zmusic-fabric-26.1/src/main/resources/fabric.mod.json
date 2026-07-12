@@ -13,13 +13,17 @@
   "environment": "client",
   "entrypoints": {
     "client": [
-      "me.zhenxin.zmusic.loader.fabric.v261.ZMusicFabric261Client"
+      {
+        "adapter": "kotlin",
+        "value": "me.zhenxin.zmusic.loader.fabric.v261.ZMusicFabric261Client"
+      }
     ]
   },
   "depends": {
     "fabricloader": ">=0.18.4",
     "minecraft": "~26.1",
     "java": ">=25",
-    "fabric-api": "*"
+    "fabric-api": "*",
+    "fabric-language-kotlin": ">=1.13.12+kotlin.2.4.0"
   }
 }

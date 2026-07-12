@@ -8,12 +8,37 @@ base {
     archivesName = 'zmusic-neoforge-1.21.1'
 }
 
+configurations {
+    kotlinRuntime
+}
+
+dependencies {
+    kotlinRuntime 'org.jetbrains.kotlin:kotlin-stdlib:2.4.0'
+
+    jarJar(implementation(group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib')) {
+        version {
+            strictly '[2.4.0,2.5.0)'
+            prefer '2.4.0'
+        }
+    }
+}
+
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(21)
 }
 
 neoForge {
     version = '21.1.221'
+
+    runs {
+        client {
+            client()
+        }
+    }
+
+    runs.configureEach {
+        additionalRuntimeClasspathConfiguration.extendsFrom(configurations.kotlinRuntime)
+    }
 
     parchment {
         minecraftVersion = '1.21.1'
