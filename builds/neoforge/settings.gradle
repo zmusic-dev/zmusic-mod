@@ -18,7 +18,8 @@ def neoforgeProjects = [
         "zmusic-neoforge-1.20.4",
         "zmusic-neoforge-1.20.6",
         "zmusic-neoforge-1.21.1",
-        "zmusic-neoforge-26.1.2"
+        "zmusic-neoforge-26.1.2",
+        "zmusic-neoforge-26.2"
 ]
 
 def selectedProject = providers.gradleProperty("zmusic.project").orNull

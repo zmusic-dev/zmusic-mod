@@ -11,7 +11,7 @@ java {
 }
 
 dependencies {
-    implementation "net.neoforged:neoforge:26.1.2.70-beta"
+    implementation "net.neoforged:neoforge:26.2.0.28-beta"
 
     implementation project(":zmusic-core")
 }
@@ -20,7 +20,7 @@ tasks.configureEach {
     if (name == "neoFormSetup") {
         doFirst {
             def userdevJar = configurations.detachedConfiguration(
-                    dependencies.create("net.neoforged:neoforge:26.1.2.70-beta:userdev@jar")
+                    dependencies.create("net.neoforged:neoforge:26.2.0.28-beta:userdev@jar")
             ).singleFile
             def expandedCache = layout.buildDirectory.dir("tmp/.cache/expanded").get().asFile
             if (!expandedCache.exists()) {

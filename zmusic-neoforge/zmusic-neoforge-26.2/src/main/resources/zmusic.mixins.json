@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "me.zhenxin.zmusic.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "client": [
+    "ClientPacketListenerPayloadMixin"
+  ]
+}

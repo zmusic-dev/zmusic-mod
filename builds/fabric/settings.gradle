@@ -27,7 +27,8 @@ def fabricProjects = [
         "zmusic-fabric-1.20.6",
         "zmusic-fabric-1.21.5",
         "zmusic-fabric-1.21.11",
-        "zmusic-fabric-26.1.2"
+        "zmusic-fabric-26.1.2",
+        "zmusic-fabric-26.2"
 ]
 
 def selectedProject = providers.gradleProperty("zmusic.project").orNull
