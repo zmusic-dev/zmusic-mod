@@ -1,12 +1,7 @@
 name: Sync Code
 
 on:
-  push:
-    branches:
-      - "main"
-      - "dev"
-    tags:
-      - "v*"
+  push: {}
 
 jobs:
   sync:
@@ -19,14 +14,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch All Branches
+        run: git fetch origin "+refs/heads/*:refs/zmusic-sync/heads/*" --prune
+
       - name: Sync to Codeberg
         continue-on-error: true
         env:
           CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
         run: |
           git remote add codeberg "https://zhenxin:${CODEBERG_TOKEN}@codeberg.org/starhui-dev/zmusic-mod.git"
-          git push codeberg refs/remotes/origin/main:refs/heads/main --force
-          git push codeberg refs/remotes/origin/dev:refs/heads/dev --force
+          git push codeberg "refs/zmusic-sync/heads/*:refs/heads/*" --force --prune
           git push codeberg --tags --force
 
       - name: Sync to CNB
@@ -35,6 +32,5 @@ jobs:
           CNB_TOKEN: ${{ secrets.CNB_TOKEN }}
         run: |
           git remote add cnb "https://cnb:${CNB_TOKEN}@cnb.cool/starhui-dev/zmusic-mod.git"
-          git push cnb refs/remotes/origin/main:refs/heads/main --force
-          git push cnb refs/remotes/origin/dev:refs/heads/dev --force
+          git push cnb "refs/zmusic-sync/heads/*:refs/heads/*" --force --prune
           git push cnb --tags --force

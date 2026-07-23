@@ -11,10 +11,10 @@ on:
       - "gradle/wrapper/gradle-wrapper.properties"
       - ".github/workflows/dev.yml"
     branches:
-      - "dev"
+      - "v3"
   pull_request:
     branches:
-      - "dev"
+      - "v3"
 
 jobs:
   build:
