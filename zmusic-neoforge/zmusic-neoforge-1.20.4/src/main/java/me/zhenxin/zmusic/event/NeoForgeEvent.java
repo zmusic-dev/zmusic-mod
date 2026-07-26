@@ -15,6 +15,10 @@ import net.neoforged.neoforge.event.TickEvent;
  * @since 2026-04-24 11:00
  */
 public class NeoForgeEvent {
+    @SubscribeEvent
+    public void onServerJoin(final ClientPlayerNetworkEvent.LoggingIn event) {
+        ClientEvent.onConnected();
+    }
 
     @SubscribeEvent
     public void onSound(final PlaySoundEvent event) {
@@ -35,7 +39,7 @@ public class NeoForgeEvent {
     @SubscribeEvent
     public void onServerQuit(final ClientPlayerNetworkEvent.LoggingOut event) {
         try {
-            ZMusic.getPlayer().stopAsync();
+            ClientEvent.onDisconnect();
         } catch (Exception e) {
             e.printStackTrace();
         }

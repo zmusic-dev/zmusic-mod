@@ -14,7 +14,6 @@ import net.minecraftforge.fml.network.NetworkEvent;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
 
-import java.nio.charset.StandardCharsets;
 import java.util.function.Supplier;
 
 /**
@@ -35,24 +34,31 @@ public class ZMusicMod {
 
     private void setup(FMLClientSetupEvent event) {
         ZMusic.setSoundManager(new SoundManagerImpl());
-        SimpleChannel channel = NetworkRegistry.newSimpleChannel(new ResourceLocation("zmusic", "channel"),
+        SimpleChannel channel = NetworkRegistry.newSimpleChannel(new ResourceLocation("zmusic", "packet"),
                 () -> "1.0", s -> true, s -> true);
-        channel.registerMessage(666, String.class, this::enc, this::dec, this::proc);
+        channel.registerMessage('Z', byte[].class, this::enc, this::dec, this::proc);
+        ClientEvent.configure(payload -> {
+            channel.sendToServer(payload);
+            return true;
+        }, "1.14.4", "forge");
         ZMusic.onEnable();
     }
 
-    private void enc(String str, PacketBuffer buffer) {
-        buffer.writeBytes(str.getBytes(StandardCharsets.UTF_8));
+    private void enc(byte[] payload, PacketBuffer buffer) {
+        buffer.writeBytes(payload, 1, payload.length - 1);
     }
 
 
-    private String dec(PacketBuffer buffer) {
-        return buffer.toString(StandardCharsets.UTF_8);
+    private byte[] dec(PacketBuffer buffer) {
+        byte[] payload = new byte[buffer.readableBytes() + 1];
+        payload[0] = 'Z';
+        buffer.readBytes(payload, 1, payload.length - 1);
+        return payload;
     }
 
-    private void proc(String message, Supplier<NetworkEvent.Context> supplier) {
-        ClientEvent.onPacket(message);
+    private void proc(byte[] payload, Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
+        context.enqueueWork(() -> ClientEvent.onPacket(payload));
         context.setPacketHandled(true);
     }
 }

@@ -3,6 +3,7 @@ package me.zhenxin.zmusic;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
+import me.zhenxin.zmusic.event.ClientEvent;
 import me.zhenxin.zmusic.manager.SoundManager;
 
 
@@ -34,20 +35,24 @@ public class ZMusic {
             @Override
             public void onStateChanged(int state) {
                 log.info("ZMusic native player state changed: {}", state);
+                ClientEvent.onPlayerStateChanged(state);
             }
 
             @Override
             public void onTrackEnded() {
                 log.info("ZMusic native track ended");
+                ClientEvent.onTrackEnded();
             }
 
             @Override
             public void onProgress(long positionMs, long durationMs) {
+                ClientEvent.onProgress(positionMs, durationMs);
             }
 
             @Override
             public void onError(String message) {
                 log.warn("ZMusic native player error: {}", message);
+                ClientEvent.onPlayerError(message);
             }
 
             @Override

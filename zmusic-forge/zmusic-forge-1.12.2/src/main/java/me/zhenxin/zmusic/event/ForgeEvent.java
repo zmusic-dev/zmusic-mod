@@ -16,6 +16,10 @@ import net.minecraftforge.fml.common.network.FMLNetworkEvent;
  * @since 2023/3/17 11:17
  */
 public class ForgeEvent {
+    @SubscribeEvent
+    public void onServerJoin(final FMLNetworkEvent.ClientConnectedToServerEvent e) {
+        ClientEvent.onConnected();
+    }
 
     @SubscribeEvent
     public void onSound(final PlaySoundEvent e) {
@@ -34,7 +38,7 @@ public class ForgeEvent {
 
     @SubscribeEvent
     public void onServerQuit(final FMLNetworkEvent.ClientDisconnectionFromServerEvent e) {
-        ZMusic.getPlayer().stopAsync();
+            ClientEvent.onDisconnect();
     }
 
 

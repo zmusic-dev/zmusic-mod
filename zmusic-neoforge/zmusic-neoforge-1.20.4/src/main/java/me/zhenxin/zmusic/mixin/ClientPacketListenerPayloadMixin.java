@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * 兼容 NeoForge 1.20.4 vanilla 连接下不分发 optional payload handler 的行为。
  * <p>
  * Bukkit/Velocity 插件服会被 NeoForge 识别为 vanilla connection，原逻辑会跳过
- * {@code NetworkRegistry.onModdedPacketAtClient(...)}，导致已解码的 {@code zmusic:channel}
+ * {@code NetworkRegistry.onModdedPacketAtClient(...)}，导致已解码的 {@code zmusic:packet}
  * 最终进入 vanilla unknown 分支。本 mixin 在该分支前消费 ZMusic 载荷。
  *
  * @author 真心
@@ -37,7 +37,7 @@ public abstract class ClientPacketListenerPayloadMixin {
         if (!(payload instanceof ZMusicPayload zmusicPayload)) {
             return;
         }
-        Minecraft.getInstance().execute(() -> ClientEvent.onPacket(zmusicPayload.message()));
+        Minecraft.getInstance().execute(() -> ClientEvent.onPacket(zmusicPayload.data()));
         ci.cancel();
     }
 }

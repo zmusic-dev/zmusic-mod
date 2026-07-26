@@ -38,7 +38,7 @@ mise run clean
 
 ### 核心 / 平台分层
 
-- `zmusic-core`（Java 8）：纯逻辑，不依赖任何 MC API。包含主入口 `ZMusic`、JNI 桥接 `ZMusicPlayer`、平台无关事件 `ClientEvent`/`PacketEvent`，以及 `SoundManager` 接口。
+- `zmusic-core`（Java 8）：纯逻辑，不依赖任何 MC API。包含主入口 `ZMusic`、JNI 桥接 `ZMusicPlayer`、平台无关事件 `ClientEvent`/`PacketEvent`、`ZMPK` 协议编解码，以及 `SoundManager` 接口。
 - `zmusic-<loader>-<mcversion>`：叶子子项目，依赖对应 MC/加载器，提供 mod 入口、`SoundManager` 实现、以及拦截原版音乐的 mixin/事件。**每个 MC 版本一份完整拷贝**，因为各版本网络 API、声音 API 差异大，无法用单份源码覆盖。
 
 `build.gradle` 的 `isLeafPlatformProject(p)` 用正则 `zmusic-(fabric|forge|neoforge)-\d+.*` 区分「叶子项目」和「容器项目」。`zmusic-fabric`/`zmusic-forge`/`zmusic-neoforge` 是空的容器项目，没有源码。
@@ -50,7 +50,7 @@ mise run clean
    - Forge：`@SubscribeEvent` 监听 `SoundEvent.SoundSourceEvent`（`event/ForgeEvent.java`）。
    - 每 tick 把游戏的 RECORDS 音量同步给原生播放器（Fabric 走 `mixin/Tick`，Forge 走 `onTick`）。
 
-2. **网络协议**：服务端通过插件消息通道 `zmusic:channel` 下发，格式是「1 字节前缀 + UTF-8 文本」。客户端跳过首字节解析文本，交给 `ClientEvent.onPacket`，按 `[Play]xxx` / `[Stop]` 分发。各版本网络 API 不同，实现差异最大：
+2. **网络协议**：Plugin 与 Mod 统一使用 `zmusic:packet` 通道和 `ZMPK + version + JSON` 二进制帧。`zmusic-core` 的 `ProtocolCodec` 负责帧校验，`ClientEvent` 处理握手、播放、停止和状态回报；该协议不兼容旧 `zmusic:channel` 与 `[Play]` / `[Stop]` 文本消息。各版本网络 API 不同，实现差异最大：
    - 老 Forge（1.12）：`FMLNetworkEvent.ClientCustomPacketEvent`。
    - 新 Forge：`SimpleChannel`。
    - Fabric：`CustomPayload` + `PayloadTypeRegistry`。

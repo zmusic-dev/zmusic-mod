@@ -5,9 +5,10 @@ import me.zhenxin.zmusic.manager.SoundManagerImpl;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.Identifier;
 
-import java.nio.charset.StandardCharsets;
 
 /**
  * Mod 主入口
@@ -22,14 +23,19 @@ public class ZMusicMod implements ModInitializer {
     @Override
     public void onInitialize() {
         ZMusic.setSoundManager(new SoundManagerImpl());
-        Identifier identifier = new Identifier("zmusic", "channel");
+        Identifier identifier = new Identifier("zmusic", "packet");
         ClientPlayNetworking.registerGlobalReceiver(identifier, (client, handler, buf, responseSender) -> {
             byte[] buffer = new byte[buf.readableBytes()];
             buf.readBytes(buffer);
-            buffer[0] = 0;
-            String message = new String(buffer, StandardCharsets.UTF_8).substring(1);
-            ClientEvent.onPacket(message);
+            client.execute(() -> ClientEvent.onPacket(buffer));
         });
+        ClientEvent.configure(payload -> {
+            PacketByteBuf packet = PacketByteBufs.create();
+            packet.writeBytes(payload);
+            ClientPlayNetworking.send(identifier, packet);
+            return true;
+        }, "1.17.1", "fabric");
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> ClientEvent.onConnected());
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ClientEvent.onDisconnect());
         ZMusic.onEnable();
     }
