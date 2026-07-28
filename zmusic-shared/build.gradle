@@ -12,9 +12,31 @@ version = sharedProps.getProperty('modVersion')
 
 description = 'Shared constants for ZMusic.'
 
+def playerVersion = sharedProps.getProperty('playerVersion')
+def nativePlatforms = [
+        'x86_64-linux'  : [archive: "zmusic-x86_64-linux-v${playerVersion}.tar.gz", lib: 'libzmusic.so',
+                             sha256: '218dd2993ab05ceab3759351cbffd8f5dc2f32162a60d6a33c84066b74d9aa87'],
+        'x86_64-windows': [archive: "zmusic-x86_64-windows-gnu-v${playerVersion}.zip", lib: 'zmusic.dll',
+                             sha256: 'da21960452f98e8515cb8bdf56e0e048a732bb3924a66557bf0b58c8a26792e4'],
+        'aarch64-macos' : [archive: "zmusic-aarch64-macos-v${playerVersion}.tar.gz", lib: 'libzmusic.dylib',
+                             sha256: 'fff65405a2dbffa10d0005501160f589d06d0a06114d4cabbbef35bd82bceaee'],
+        'x86_64-macos'  : [archive: "zmusic-x86_64-macos-v${playerVersion}.tar.gz", lib: 'libzmusic.dylib',
+                             sha256: '2bbd15c7e838e7fb723b4904f4a52eb14dea26458726082222429c8bc87a7a89'],
+]
+def nativeOutputDir = layout.buildDirectory.dir('native')
+def nativeCacheDir = file("../.gradle/zmusic-player/v${playerVersion}")
+
 repositories {
     mavenLocal()
     mavenCentral()
+}
+
+dependencies {
+    compileOnly 'org.jetbrains.kotlin:kotlin-stdlib:2.2.21'
+    compileOnly 'com.google.code.gson:gson:2.11.0'
+
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit5:2.2.21'
+    testImplementation 'com.google.code.gson:gson:2.11.0'
 }
 
 java {
@@ -31,6 +53,65 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
     compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+
+tasks.register('prepareNativeLibraries') {
+    inputs.property('playerVersion', playerVersion)
+    outputs.dir(nativeOutputDir)
+
+    doLast {
+        def output = nativeOutputDir.get().asFile
+        output.deleteDir()
+        output.mkdirs()
+        nativeCacheDir.mkdirs()
+
+        nativePlatforms.each { platform, config ->
+            def archive = new File(nativeCacheDir, config.archive as String)
+            if (!archive.exists() || archive.length() == 0) {
+                ant.get(
+                        src: "https://github.com/starhui-dev/zmusic-player/releases/download/v${playerVersion}/${config.archive}",
+                        dest: archive
+                )
+            }
+            def digest = java.security.MessageDigest.getInstance('SHA-256')
+                    .digest(archive.bytes)
+                    .collect { String.format('%02x', it & 0xff) }
+                    .join()
+            if (digest != config.sha256) {
+                throw new GradleException("Checksum mismatch for ${archive.name}")
+            }
+
+            def platformDir = new File(output, platform)
+            platformDir.mkdirs()
+            if (archive.name.endsWith('.zip')) {
+                ant.unzip(src: archive, dest: platformDir) {
+                    patternset { include(name: "**/${config.lib}") }
+                    mapper(type: 'flatten')
+                }
+            } else {
+                ant.untar(src: archive, dest: platformDir, compression: 'gzip') {
+                    patternset { include(name: "**/${config.lib}") }
+                    mapper(type: 'flatten')
+                }
+            }
+
+            def library = new File(platformDir, config.lib as String)
+            if (!library.exists() || library.length() == 0) {
+                throw new GradleException("Failed to prepare native library ${platform}/${config.lib}")
+            }
+        }
+    }
+}
+
+tasks.named('jar') {
+    dependsOn(tasks.named('prepareNativeLibraries'))
+    from(nativeOutputDir) {
+        into('META-INF/native')
+    }
 }
 
 publishing {

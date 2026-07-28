@@ -38,8 +38,13 @@ subprojects {
     apply plugin: 'java-library'
     apply plugin: 'org.jetbrains.kotlin.jvm'
 
+    configurations {
+        embedded
+    }
+
     dependencies {
         implementation "me.zhenxin:zmusic-shared:${rootProject.version}"
+        embedded "me.zhenxin:zmusic-shared:${rootProject.version}"
     }
 
     def modId = sharedProps.getProperty('modId')
@@ -69,5 +74,12 @@ subprojects {
 
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
         compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
+    }
+
+    tasks.named('jar', Jar) {
+        from {
+            configurations.embedded.collect { zipTree(it) }
+        }
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 }

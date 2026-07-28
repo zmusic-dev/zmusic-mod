@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "${modId}",
+  "version": "${modVersion}",
+  "name": "${modName}",
+  "description": "${modDescription}",
+  "authors": ["${modAuthor}"],
+  "contact": {
+    "homepage": "${modHomepageUrl}",
+    "sources": "${modSourcesUrl}",
+    "issues": "${modIssueUrl}"
+  },
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      {
+        "adapter": "kotlin",
+        "value": "me.zhenxin.zmusic.loader.fabric.v1165.ZMusicFabric1165Client"
+      }
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.14.0",
+    "minecraft": "1.16.5",
+    "java": ">=8",
+    "fabric-api": "*",
+    "fabric-language-kotlin": ">=1.13.12+kotlin.2.4.0"
+  }
+}

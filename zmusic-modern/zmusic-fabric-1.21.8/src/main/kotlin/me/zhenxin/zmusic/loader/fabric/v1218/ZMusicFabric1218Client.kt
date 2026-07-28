@@ -1,21 +1,64 @@
 package me.zhenxin.zmusic.loader.fabric.v1218
 
+import me.zhenxin.zmusic.client.ClientEnvironment
+import me.zhenxin.zmusic.client.ClientLogger
+import me.zhenxin.zmusic.client.ZMusicClient
 import me.zhenxin.zmusic.common.ZMusicConstants
 import net.fabricmc.api.ClientModInitializer
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
+import net.fabricmc.loader.api.FabricLoader
+import net.minecraft.network.PacketByteBuf
+import net.minecraft.network.codec.PacketCodec
+import net.minecraft.network.packet.CustomPayload
+import net.minecraft.util.Identifier
 import org.slf4j.LoggerFactory
 
 /**
- * Fabric 1.21.8 客户端入口。
+ * Fabric 1.21.8 客户端网络适配器。
  *
  * @author 真心
  * @since 2026-04-25 00:13
  */
 class ZMusicFabric1218Client : ClientModInitializer {
     override fun onInitializeClient() {
-        LOGGER.info("Hello World from ZMusic Fabric 1.21.8!")
+        PayloadTypeRegistry.playS2C().register(MusicPayload.ID, MusicPayload.CODEC)
+        PayloadTypeRegistry.playC2S().register(MusicPayload.ID, MusicPayload.CODEC)
+        ClientPlayNetworking.registerGlobalReceiver(MusicPayload.ID) { payload, context ->
+            context.client().execute { ZMusicClient.onPacket(payload.data) }
+        }
+        ZMusicClient.configure(
+            ClientEnvironment("1.21.8", "fabric", FabricLoader.getInstance().gameDir),
+            { payload ->
+                ClientPlayNetworking.send(MusicPayload(payload))
+                true
+            },
+            FabricLogger,
+        )
+        ClientPlayConnectionEvents.JOIN.register { _, _, _ -> ZMusicClient.onConnected() }
+        ClientPlayConnectionEvents.DISCONNECT.register { _, _ -> ZMusicClient.onDisconnected() }
     }
 
-    private companion object {
-        val LOGGER = LoggerFactory.getLogger(ZMusicConstants.MOD_ID)
+    private data class MusicPayload(val data: ByteArray) : CustomPayload {
+        override fun getId(): CustomPayload.Id<out CustomPayload> = ID
+
+        companion object {
+            val ID = CustomPayload.Id<MusicPayload>(Identifier.of(ZMusicConstants.MOD_ID, "packet"))
+            val CODEC: PacketCodec<PacketByteBuf, MusicPayload> = PacketCodec.of(
+                { value, buffer -> buffer.writeBytes(value.data) },
+                { buffer -> ByteArray(buffer.readableBytes()).also(buffer::readBytes).let(::MusicPayload) },
+            )
+        }
+    }
+
+    private object FabricLogger : ClientLogger {
+        private val delegate = LoggerFactory.getLogger(ZMusicConstants.MOD_ID)
+
+        override fun info(message: String) = delegate.info(message)
+
+        override fun warn(message: String, throwable: Throwable?) {
+            if (throwable == null) delegate.warn(message) else delegate.warn(message, throwable)
+        }
     }
 }

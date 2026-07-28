@@ -1,0 +1,13 @@
+[
+  {
+    "modid": "${modId}",
+    "name": "${modName}",
+    "version": "${modVersion}",
+    "mcversion": "1.12.2",
+    "description": "${modDescription}",
+    "url": "${modHomepageUrl}",
+    "credits": "",
+    "authorList": ["${modAuthor}"],
+    "dependencies": ["forgelin"]
+  }
+]

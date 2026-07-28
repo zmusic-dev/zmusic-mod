@@ -15,6 +15,8 @@ configurations {
 dependencies {
     kotlinRuntime 'org.jetbrains.kotlin:kotlin-stdlib:2.4.0'
 
+    jarJar(implementation("me.zhenxin:zmusic-shared:${project.version}"))
+
     jarJar(implementation(group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib')) {
         version {
             strictly '[2.4.0,2.5.0)'

@@ -1,1 +1,21 @@
+plugins {
+    id 'com.gtnewhorizons.retrofuturagradle' version '1.4.9'
+}
+
 description = 'Forge 1.12.2 adapter for ZMusic.'
+
+dependencies {
+    compileOnly 'org.jetbrains.kotlin:kotlin-stdlib:2.2.21'
+    runtimeOnly 'maven.modrinth:forgelin-legacy:2.4.0-2.2.21'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+
+minecraft {
+    mcVersion.set('1.12.2')
+    username.set('Developer')
+}
