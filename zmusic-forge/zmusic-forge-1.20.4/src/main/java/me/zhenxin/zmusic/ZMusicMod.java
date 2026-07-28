@@ -13,7 +13,10 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.network.ChannelBuilder;
+import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.SimpleChannel;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * Mod 主入口
@@ -33,36 +36,29 @@ public class ZMusicMod {
 
     private void setup(FMLClientSetupEvent event) {
         ZMusic.setSoundManager(new SoundManagerImpl());
-        SimpleChannel channel = ChannelBuilder.named(new ResourceLocation("zmusic", "packet"))
+        SimpleChannel channel = ChannelBuilder.named(new ResourceLocation("zmusic", "channel"))
                 .networkProtocolVersion(1)
                 .optional()
                 .simpleChannel();
-        channel.messageBuilder(byte[].class, 'Z')
+        channel.messageBuilder(String.class, 666, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(this::enc)
                 .decoder(this::dec)
                 .consumerMainThread(this::proc)
                 .add();
-        ClientEvent.configure(payload -> {
-            channel.send(payload, net.minecraftforge.network.PacketDistributor.SERVER.noArg());
-            return true;
-        }, "1.20.4", "forge");
         ZMusic.onEnable();
     }
 
-    private void enc(byte[] payload, FriendlyByteBuf buffer) {
-        buffer.writeBytes(payload, 1, payload.length - 1);
+    private void enc(String str, FriendlyByteBuf buffer) {
+        buffer.writeBytes(str.getBytes(StandardCharsets.UTF_8));
     }
 
 
-    private byte[] dec(FriendlyByteBuf buffer) {
-        byte[] payload = new byte[buffer.readableBytes() + 1];
-        payload[0] = 'Z';
-        buffer.readBytes(payload, 1, payload.length - 1);
-        return payload;
+    private String dec(FriendlyByteBuf buffer) {
+        return buffer.toString(StandardCharsets.UTF_8);
     }
 
-    private void proc(byte[] payload, CustomPayloadEvent.Context context) {
-        ClientEvent.onPacket(payload);
+    private void proc(String message, CustomPayloadEvent.Context context) {
+        ClientEvent.onPacket(message);
         context.setPacketHandled(true);
     }
 }

@@ -10,7 +10,6 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 /**
  * NeoForge Mod 主入口
@@ -30,20 +29,16 @@ public class ZMusicNeoForgeMod {
 
     private void onClientSetup(FMLClientSetupEvent event) {
         ZMusic.setSoundManager(new SoundManagerImpl());
-        ClientEvent.configure(payload -> {
-            ClientPacketDistributor.sendToServer(new ZMusicPayload(payload));
-            return true;
-        }, "26.2", "neoforge");
         ZMusic.onEnable();
     }
 
     private void registerPayloads(RegisterPayloadHandlersEvent event) {
         event.registrar("1")
                 .optional()
-                .playBidirectional(ZMusicPayload.TYPE, ZMusicPayload.STREAM_CODEC, this::handlePayload);
+                .playToClient(ZMusicPayload.TYPE, ZMusicPayload.STREAM_CODEC, this::handlePayload);
     }
 
     private void handlePayload(ZMusicPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> ClientEvent.onPacket(payload.data()));
+        ClientEvent.onPacket(payload.message());
     }
 }

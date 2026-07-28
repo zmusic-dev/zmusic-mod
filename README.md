@@ -16,16 +16,8 @@
 ```shell
 git clone https://github.com/starhui-dev/zmusic-mod
 cd zmusic-mod
-mise trust
-mise install
-mise run build
+./gradlew clean build
 ```
-
-也可以使用 `mise run build:fabric`、`mise run build:forge` 或 `mise run build:neoforge` 单独构建一个加载器矩阵。
-
-## 通信协议
-
-Mod 通过 `zmusic:packet` 通道与 ZMusic Plugin 通信，使用 `ZMPK + version + JSON` 二进制帧完成握手、播放、停止、状态、进度和错误上报。该协议不兼容旧 `zmusic:channel` 与 `[Play]` / `[Stop]` 文本消息，Plugin 与 Mod 必须同时升级。
 
 ## 开源协议
 

@@ -11,6 +11,8 @@ import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.util.Identifier;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * Mod 主入口
  *
@@ -25,14 +27,15 @@ public class ZMusicMod implements ModInitializer {
     public void onInitialize() {
         ZMusic.setSoundManager(new SoundManagerImpl());
 
-        record MusicPayload(byte[] data) implements CustomPayload {
-            public static final Id<MusicPayload> ID = new CustomPayload.Id<>(Identifier.of("zmusic", "packet"));
-            public static final PacketCodec<PacketByteBuf, MusicPayload> CODEC = PacketCodec.of(
-                    (value, buf) -> buf.writeBytes(value.data),
-                    buf -> {
+        record MusicPayload(String str) implements CustomPayload {
+            public static final Id<MusicPayload> ID = new CustomPayload.Id<>(Identifier.of("zmusic", "channel"));
+            public static final PacketCodec<PacketByteBuf, MusicPayload> CODEC = PacketCodec.of((value, buf) -> {
+            }, buf -> {
                 byte[] buffer = new byte[buf.readableBytes()];
                 buf.readBytes(buffer);
-                return new MusicPayload(buffer);
+                buffer[0] = 0;
+                String message = new String(buffer, StandardCharsets.UTF_8).substring(1);
+                return new MusicPayload(message);
             });
 
 
@@ -43,16 +46,10 @@ public class ZMusicMod implements ModInitializer {
         }
 
         PayloadTypeRegistry.playS2C().register(MusicPayload.ID, MusicPayload.CODEC);
-        PayloadTypeRegistry.playC2S().register(MusicPayload.ID, MusicPayload.CODEC);
         ClientPlayNetworking.registerGlobalReceiver(MusicPayload.ID, (payload, context) -> {
-            context.client().execute(() -> ClientEvent.onPacket(payload.data));
+            ClientEvent.onPacket(payload.str);
         });
 
-        ClientEvent.configure(payload -> {
-            ClientPlayNetworking.send(new MusicPayload(payload));
-            return true;
-        }, "1.21.11", "fabric");
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> ClientEvent.onConnected());
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ClientEvent.onDisconnect());
         ZMusic.onEnable();
     }

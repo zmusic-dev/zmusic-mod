@@ -16,10 +16,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
  * @since 2023/3/17 11:17
  */
 public class ForgeEvent {
-    @SubscribeEvent
-    public void onServerJoin(final ClientPlayerNetworkEvent.LoggedInEvent e) {
-        ClientEvent.onConnected();
-    }
 
     @SubscribeEvent
     public void onSound(final SoundEvent.SoundSourceEvent e) {
@@ -39,7 +35,7 @@ public class ForgeEvent {
 
     @SubscribeEvent
     public void onServerQuit(final ClientPlayerNetworkEvent.LoggedOutEvent e) {
-            ClientEvent.onDisconnect();
+        ZMusic.getPlayer().stopAsync();
     }
 
 

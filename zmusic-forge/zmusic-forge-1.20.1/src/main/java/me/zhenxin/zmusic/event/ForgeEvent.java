@@ -22,10 +22,6 @@ import java.lang.reflect.Modifier;
  */
 @Log4j2
 public class ForgeEvent {
-    @SubscribeEvent
-    public void onServerJoin(final ClientPlayerNetworkEvent.LoggingIn e) {
-        ClientEvent.onConnected();
-    }
 
     private boolean tickSyncDisabled;
     private boolean soundEventDisabled;
@@ -90,7 +86,7 @@ public class ForgeEvent {
     @SubscribeEvent
     public void onServerQuit(final ClientPlayerNetworkEvent.LoggingOut e) {
         try {
-            ClientEvent.onDisconnect();
+            ZMusic.getPlayer().stopAsync();
         } catch (Exception e1) {
             e1.printStackTrace();
         }

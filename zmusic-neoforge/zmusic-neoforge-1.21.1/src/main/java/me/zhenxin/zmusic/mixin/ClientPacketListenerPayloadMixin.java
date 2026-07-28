@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * <p>
  * 1.21 已通过 {@link net.minecraft.network.codec.StreamCodec} 解码 custom payload，
  * NeoForge 会在通用监听器里统一处理 modded payload。Bukkit/Velocity 插件服没有
- * NeoForge 协商信息时，这里需要先消费已解码的 {@code zmusic:packet}，避免被后续
+ * NeoForge 协商信息时，这里需要先消费已解码的 {@code zmusic:channel}，避免被后续
  * modded payload 校验当成未协商通道处理。
  *
  * @author 真心
@@ -38,7 +38,7 @@ public abstract class ClientPacketListenerPayloadMixin {
         if (!(payload instanceof ZMusicPayload zmusicPayload)) {
             return;
         }
-        Minecraft.getInstance().execute(() -> ClientEvent.onPacket(zmusicPayload.data()));
+        Minecraft.getInstance().execute(() -> ClientEvent.onPacket(zmusicPayload.message()));
         ci.cancel();
     }
 }
