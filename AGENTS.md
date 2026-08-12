@@ -1,6 +1,6 @@
 # AGENTS.md
 
-ZMusic 是一个**纯客户端** Minecraft 音乐 mod。同一套逻辑代码按「加载器 × MC 版本」拆成大量叶子子项目，共享一个 `zmusic-core` 核心模块，核心模块通过 JNI 桥接外部 Zig 播放引擎（zmusic-player）。
+ZMusic 是一个**纯客户端** Minecraft 音乐 mod。同一套逻辑代码按「加载器 × MC 版本」拆成大量叶子子项目，共享一个 `zmusic-core` 核心模块，核心模块通过 JNI 桥接外部 Rust 播放引擎（zmusic-player）。
 
 ## 构建命令
 
@@ -60,7 +60,7 @@ mise run clean
 
 ### 原生库打包
 
-`downloadNativeLibs` 任务从 `starhui-dev/zmusic-player` 的 GitHub Release（tag `v${zmusicPlayerVersion}`，版本在 `gradle.properties`）拉取四个平台的 native 库，解压缓存到 `.gradle/zmusic-player/`，叶子项目打 jar 时塞进 `META-INF/native/`。**构建联网**，受 GitHub API 限流影响。
+`downloadNativeLibs` 任务从 `starhui-dev/zmusic-player` 的 GitHub Release（tag `v${zmusicPlayerVersion}`，版本在 `gradle.properties`）拉取 Linux、Windows 和 macOS 的 x86_64/ARM64 native 库，以及 Android ARM64 native 库，解压缓存到 `.gradle/zmusic-player/`，叶子项目打 jar 时塞进 `META-INF/native/`。**构建联网**，受 GitHub API 限流影响。
 
 ## 约定与陷阱
 

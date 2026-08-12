@@ -23,7 +23,7 @@ import java.util.concurrent.ThreadFactory;
 /**
  * ZMusic Player JNI 桥接
  *
- * <p>通过 JNI 桥接 Zig 层的播放引擎，提供完整的音乐播放器 Java 接口。
+ * <p>通过 JNI 桥接 Rust 播放引擎，提供完整的音乐播放器 Java 接口。
  * 包含播放控制、队列管理、歌词加载、事件回调等能力。</p>
  *
  * @author 真心
@@ -548,6 +548,10 @@ public class ZMusicPlayer {
             return configuredDirectory;
         }
 
+        if (isAndroidRuntime()) {
+            return Paths.get(System.getProperty("java.io.tmpdir"), "zmusic");
+        }
+
         Path gameDir = findGameDirectory();
         return gameDir.resolve("zmusic");
     }
@@ -657,10 +661,22 @@ public class ZMusicPlayer {
         String os = System.getProperty("os.name").toLowerCase(Locale.ROOT);
         String arch = normalizeArch(System.getProperty("os.arch").toLowerCase(Locale.ROOT));
 
-        if (os.contains("linux") && "x86_64".equals(arch)) return "x86_64-linux";
-        if (os.contains("win") && "x86_64".equals(arch)) return "x86_64-windows";
+        if (isAndroidRuntime() && "aarch64".equals(arch)) {
+            return "aarch64-android";
+        }
+        if (os.contains("linux") && ("x86_64".equals(arch) || "aarch64".equals(arch))) {
+            return arch + "-linux";
+        }
+        if (os.contains("win") && ("x86_64".equals(arch) || "aarch64".equals(arch))) {
+            return arch + "-windows";
+        }
         if (os.contains("mac") && ("x86_64".equals(arch) || "aarch64".equals(arch))) return arch + "-macos";
         throw new UnsupportedOperationException("Unsupported native platform: " + os + " " + arch);
+    }
+
+    private static boolean isAndroidRuntime() {
+        String osVersion = System.getProperty("os.version", "").toLowerCase(Locale.ROOT);
+        return osVersion.contains("android");
     }
 
     private static String normalizeArch(String arch) {
