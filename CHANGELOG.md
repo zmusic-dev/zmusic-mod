@@ -1,5 +1,25 @@
 # Changelog
 
+## v3.8.0
+
+- 将内置播放器升级为基于 Rust、Rodio、CPAL 和 Symphonia 的 `zmusic-player` 1.0.0-alpha.4。
+- 新增 Linux ARM64、Windows ARM64 和 Android ARM64 支持；发布包现在内置 7 个平台的原生库。
+- 新增 Minecraft 26.2 支持，提供 Fabric 和 NeoForge 构建。
+- 将播放、停止和音量操作移出 Minecraft 客户端线程，避免网络加载阻塞游戏。
+- 新增原生播放器状态、缓冲和错误日志，便于定位播放失败。
+- 修复 Forge 1.20.1 客户端启动崩溃、音频线程冻结及映射差异导致的 `NoSuchMethodError`。
+- 修复 Forge 1.20.4 模组元数据中的 Minecraft 和 Forge 版本范围。
+
+English:
+
+- Upgraded the bundled player to `zmusic-player` 1.0.0-alpha.4, powered by Rust, Rodio, CPAL, and Symphonia.
+- Added Linux ARM64, Windows ARM64, and Android ARM64 support; release jars now bundle native libraries for seven platforms.
+- Added Minecraft 26.2 support with Fabric and NeoForge builds.
+- Moved play, stop, and volume operations off the Minecraft client thread to prevent network loading from blocking the game.
+- Added native player state, buffering, and error diagnostics for playback failures.
+- Fixed Forge 1.20.1 startup crashes, sound-thread freezes, and mapping-related `NoSuchMethodError` failures.
+- Fixed the Minecraft and Forge version ranges in the Forge 1.20.4 mod metadata.
+
 ## v3.7.1
 
 - 将模组运行时切换到原生 `zmusic-player`。

@@ -6,7 +6,7 @@ on:
       tag:
         description: Release tag to publish
         required: true
-        default: v3.7.1
+        default: v3.8.0
       dry-run:
         description: Validate marketplace metadata without publishing files
         required: true
@@ -22,6 +22,11 @@ jobs:
       max-parallel: 4
       matrix:
         include:
+          - loader: Fabric
+            mod-loader: fabric
+            target-version: "26.2"
+            supported-versions: "26.2"
+            artifact-name: ZMusic Fabric 26.2
           - loader: Fabric
             mod-loader: fabric
             target-version: 26.1.2
@@ -137,6 +142,11 @@ jobs:
             target-version: 1.12.2
             supported-versions: 1.12.2
             artifact-name: ZMusic Forge 1.12.2
+          - loader: NeoForge
+            mod-loader: neoforge
+            target-version: "26.2"
+            supported-versions: "26.2"
+            artifact-name: ZMusic NeoForge 26.2
           - loader: NeoForge
             mod-loader: neoforge
             target-version: 26.1.2
