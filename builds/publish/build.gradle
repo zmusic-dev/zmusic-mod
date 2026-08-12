@@ -113,41 +113,6 @@ def parsePublishVersions = {
     versions
 }
 
-def curseForgeGameVersionId = { List versions, List versionTypes, String versionName, String kind ->
-    List matches
-    switch (kind) {
-        case 'loader':
-            matches = versions.findAll {
-                it.name == versionName && it.gameVersionTypeID == 68441
-            }
-            break
-        case 'minecraft':
-            def minecraftTypeIds = versionTypes.findAll {
-                (it.name as String).startsWith('Minecraft ')
-            }.collect { it.id }
-            matches = versions.findAll {
-                it.name == versionName && minecraftTypeIds.contains(it.gameVersionTypeID)
-            }
-            break
-        case 'environment':
-            def environmentTypeIds = versionTypes.findAll {
-                it.name == 'Environment' || it.slug == 'environment'
-            }.collect { it.id }
-            matches = versions.findAll {
-                it.name == versionName && environmentTypeIds.contains(it.gameVersionTypeID)
-            }
-            break
-        default:
-            publishMarketplaceFail("unsupported CurseForge game version kind: ${kind}")
-    }
-
-    if (matches.size() != 1) {
-        publishMarketplaceFail("expected one CurseForge ${kind} version id for ${versionName}, got ${matches.size()}: ${groovy.json.JsonOutput.toJson(matches.collect { it.id })}")
-    }
-
-    matches[0].id
-}
-
 tasks.register('publishMarketplaceFile') {
     group = 'publishing'
     description = 'Publishes or dry-runs one built ZMusic jar on Modrinth and CurseForge.'
@@ -261,27 +226,19 @@ tasks.register('publishMarketplaceFile') {
             )
             expectPublishStatus(response, [200])
             def curseForgeVersions = new groovy.json.JsonSlurper().parseText(response.body) as List
-
-            response = publishApiRequest(
-                    'GET',
-                    "${curseForgeApiBaseUrl.replaceAll('/+$', '')}/api/game/version-types",
-                    ['X-Api-Token': token, 'Accept': 'application/json']
-            )
-            expectPublishStatus(response, [200])
-            def curseForgeVersionTypes = new groovy.json.JsonSlurper().parseText(response.body) as List
-
-            def loaderVersionId = curseForgeGameVersionId(curseForgeVersions, curseForgeVersionTypes, loaderName, 'loader')
-            def environmentVersionId = curseForgeGameVersionId(curseForgeVersions, curseForgeVersionTypes, 'Client', 'environment')
-            def minecraftVersionIds = minecraftVersions.collect {
-                curseForgeGameVersionId(curseForgeVersions, curseForgeVersionTypes, it, 'minecraft')
+            def gameVersionNames = ([loaderName, 'Client'] + minecraftVersions).unique()
+            def missingVersionNames = gameVersionNames.findAll { versionName ->
+                !curseForgeVersions.any { it.name == versionName }
             }
-            def gameVersionIds = ([loaderVersionId, environmentVersionId] + minecraftVersionIds).collect { it as Integer }
+            if (!missingVersionNames.isEmpty()) {
+                publishMarketplaceFail("CurseForge has no game versions named: ${missingVersionNames.join(' ')}")
+            }
             def metadata = [
-                    changelog    : changelog,
-                    changelogType: 'markdown',
-                    displayName  : releaseName,
-                    gameVersions : gameVersionIds,
-                    releaseType  : 'release'
+                    changelog       : changelog,
+                    changelogType   : 'markdown',
+                    displayName     : releaseName,
+                    gameVersionNames: gameVersionNames,
+                    releaseType     : 'release'
             ]
             def metadataJson = groovy.json.JsonOutput.toJson(metadata)
 

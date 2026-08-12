@@ -12,6 +12,11 @@ on:
         required: true
         default: true
         type: boolean
+      target-version:
+        description: Only publish one Minecraft target version; empty publishes all
+        required: false
+        default: ''
+        type: string
 
 jobs:
   publish:
@@ -169,9 +174,12 @@ jobs:
             artifact-name: ZMusic NeoForge 1.20.4
     steps:
       - uses: actions/checkout@v6
+        if: ${{ inputs.target-version == '' || matrix.target-version == inputs.target-version }}
       - name: Setup mise
+        if: ${{ inputs.target-version == '' || matrix.target-version == inputs.target-version }}
         uses: jdx/mise-action@v4
       - name: Download release asset
+        if: ${{ inputs.target-version == '' || matrix.target-version == inputs.target-version }}
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag }}
@@ -181,6 +189,7 @@ jobs:
             -D artifact \
             -p "zmusic-${{ matrix.mod-loader }}-${{ matrix.target-version }}-${TAG#v}.jar"
       - name: Download release notes
+        if: ${{ inputs.target-version == '' || matrix.target-version == inputs.target-version }}
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag }}
@@ -194,6 +203,7 @@ jobs:
             exit 1
           fi
       - name: Publish to CurseForge and Modrinth
+        if: ${{ inputs.target-version == '' || matrix.target-version == inputs.target-version }}
         env:
           MOD_LOADER: ${{ matrix.mod-loader }}
           MC_VERSION: ${{ matrix.target-version }}
@@ -204,7 +214,6 @@ jobs:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           CURSEFORGE_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
-          PUBLISH_CURSEFORGE: ${{ matrix.target-version != '26.2' }}
           DRY_RUN: ${{ inputs.dry-run }}
         run: |
           FILE_PATH="$(find artifact -maxdepth 1 -type f -name '*.jar' -print -quit)"

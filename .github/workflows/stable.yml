@@ -419,7 +419,6 @@ jobs:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           CURSEFORGE_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
-          PUBLISH_CURSEFORGE: ${{ matrix.target-version != '26.2' }}
           DRY_RUN: true
         run: |
           FILE_PATH="$(find artifact -maxdepth 1 -type f -name '*.jar' -print -quit)"
@@ -678,7 +677,6 @@ jobs:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           CURSEFORGE_PROJECT_ID: ${{ vars.CURSEFORGE_PROJECT_ID }}
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
-          PUBLISH_CURSEFORGE: ${{ matrix.target-version != '26.2' }}
           DRY_RUN: false
         run: |
           FILE_PATH="$(find artifact -maxdepth 1 -type f -name '*.jar' -print -quit)"
