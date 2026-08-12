@@ -129,6 +129,14 @@ def curseForgeGameVersionId = { List versions, List versionTypes, String version
                 it.name == versionName && minecraftTypeIds.contains(it.gameVersionTypeID)
             }
             break
+        case 'environment':
+            def environmentTypeIds = versionTypes.findAll {
+                it.name == 'Environment' || it.slug == 'environment'
+            }.collect { it.id }
+            matches = versions.findAll {
+                it.name == versionName && environmentTypeIds.contains(it.gameVersionTypeID)
+            }
+            break
         default:
             publishMarketplaceFail("unsupported CurseForge game version kind: ${kind}")
     }
@@ -263,10 +271,11 @@ tasks.register('publishMarketplaceFile') {
             def curseForgeVersionTypes = new groovy.json.JsonSlurper().parseText(response.body) as List
 
             def loaderVersionId = curseForgeGameVersionId(curseForgeVersions, curseForgeVersionTypes, loaderName, 'loader')
+            def environmentVersionId = curseForgeGameVersionId(curseForgeVersions, curseForgeVersionTypes, 'Client', 'environment')
             def minecraftVersionIds = minecraftVersions.collect {
                 curseForgeGameVersionId(curseForgeVersions, curseForgeVersionTypes, it, 'minecraft')
             }
-            def gameVersionIds = ([loaderVersionId] + minecraftVersionIds).collect { it as Integer }
+            def gameVersionIds = ([loaderVersionId, environmentVersionId] + minecraftVersionIds).collect { it as Integer }
             def metadata = [
                     changelog    : changelog,
                     changelogType: 'markdown',
