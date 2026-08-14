@@ -6,7 +6,7 @@ ext {
     modDescription = "Powerful Music System"
     zmusicPlayerVersion = project.hasProperty('zmusicPlayerVersion')
             ? project.property('zmusicPlayerVersion').toString()
-            : (project.findProperty('zmusicPlayerVersion')?.toString() ?: '1.0.0-alpha.4')
+            : (project.findProperty('zmusicPlayerVersion')?.toString() ?: '1.0.0-alpha.5')
     nativePlatforms = [
         'x86_64-linux'   : [libName: 'libzmusic.so',    pattern: ~/zmusic-x86_64-linux-.*\.tar\.gz/],
         'aarch64-linux'  : [libName: 'libzmusic.so',    pattern: ~/zmusic-aarch64-linux-.*\.tar\.gz/],
