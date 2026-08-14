@@ -6,7 +6,7 @@ on:
       tag:
         description: Release tag to publish
         required: true
-        default: v3.8.0
+        default: v3.8.1
       dry-run:
         description: Validate marketplace metadata without publishing files
         required: true

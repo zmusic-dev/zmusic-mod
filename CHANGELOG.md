@@ -1,5 +1,17 @@
 # Changelog
 
+## v3.8.1
+
+- 将内置播放器升级至 `zmusic-player` 1.0.0-alpha.5。
+- 修复部分玩家在线播放歌曲时因 HTTP 正文中断或长时间停滞而提前停止的问题；播放器现在会从已下载位置自动续传。
+- 加强续传响应范围校验并限制重试次数，避免损坏音频或无限重连。
+
+English:
+
+- Upgraded the bundled player to `zmusic-player` 1.0.0-alpha.5.
+- Fixed online songs stopping early for some players when an HTTP response body is interrupted or stalls; playback now resumes from the downloaded offset.
+- Added stricter resumed-range validation and bounded retries to prevent corrupted audio or endless reconnects.
+
 ## v3.8.0
 
 - 将内置播放器升级为基于 Rust、Rodio、CPAL 和 Symphonia 的 `zmusic-player` 1.0.0-alpha.4。
