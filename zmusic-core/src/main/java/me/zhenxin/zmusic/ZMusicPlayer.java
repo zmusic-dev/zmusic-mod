@@ -107,6 +107,8 @@ public class ZMusicPlayer {
     public static final int STATE_PLAYING = 2;
     public static final int STATE_PAUSED = 3;
     public static final int STATE_ERROR = 4;
+    // Minecraft 声音线程只读取快照，避免状态查询等待原生层的网络加载锁。
+    private volatile int currentState = STATE_STOPPED;
 
     // ---- 循环模式常量 ----
     public static final int REPEAT_NONE = 0;
@@ -126,7 +128,8 @@ public class ZMusicPlayer {
         if (handle == 0) {
             throw new RuntimeException("ZMusicPlayer 初始化失败");
         }
-        log.info("ZMusic native player initialized, state={}", nativeGetState(handle));
+        currentState = nativeGetState(handle);
+        log.info("ZMusic native player initialized, state={}", currentState);
     }
 
     /**
@@ -165,6 +168,7 @@ public class ZMusicPlayer {
                 nativeDestroy(handle);
             }
             handle = 0;
+            currentState = STATE_STOPPED;
         }
     }
 
@@ -174,7 +178,12 @@ public class ZMusicPlayer {
      * @param url 音频资源的 URL
      * @return 0 表示成功，非零表示错误码
      */
-    public int play(String url) { return nativePlay(handle, url); }
+    public int play(String url) {
+        currentState = STATE_LOADING;
+        int result = nativePlay(handle, url);
+        refreshCurrentState();
+        return result;
+    }
 
     /**
      * 在播放器线程中停止当前曲目并播放新 URL，避免阻塞 Minecraft 客户端线程。
@@ -191,15 +200,17 @@ public class ZMusicPlayer {
                     if (stopResult != 0) {
                         log.warn("ZMusic nativeStop before play returned {}", stopResult);
                     }
+                    refreshCurrentState();
                 }
                 if (!running || handle == 0) {
                     return;
                 }
                 synchronized (nativeCallLock) {
-                    int stateBeforePlay = nativeGetState(handle);
+                    int stateBeforePlay = currentState;
+                    currentState = STATE_LOADING;
                     log.info("Calling ZMusic nativePlay, stateBefore={}, url={}", stateBeforePlay, url);
                     int playResult = nativePlay(handle, url);
-                    int stateAfterPlay = nativeGetState(handle);
+                    int stateAfterPlay = refreshCurrentState();
                     if (playResult != 0) {
                         log.warn("ZMusic nativePlay returned {} for {}, stateAfter={}", playResult, url, stateAfterPlay);
                     } else {
@@ -215,14 +226,22 @@ public class ZMusicPlayer {
      *
      * @return 0 表示成功，非零表示错误码
      */
-    public int pause() { return nativePause(handle); }
+    public int pause() {
+        int result = nativePause(handle);
+        refreshCurrentState();
+        return result;
+    }
 
     /**
      * 停止播放并释放音频资源。
      *
      * @return 0 表示成功，非零表示错误码
      */
-    public int stop() { return nativeStop(handle); }
+    public int stop() {
+        int result = nativeStop(handle);
+        refreshCurrentState();
+        return result;
+    }
 
     /**
      * 在播放器线程中停止播放。
@@ -239,6 +258,7 @@ public class ZMusicPlayer {
                     if (stopResult != 0) {
                         log.warn("ZMusic nativeStop returned {}", stopResult);
                     }
+                    refreshCurrentState();
                 }
             }
         });
@@ -249,7 +269,11 @@ public class ZMusicPlayer {
      *
      * @return 0 表示成功，非零表示错误码
      */
-    public int resume() { return nativeResume(handle); }
+    public int resume() {
+        int result = nativeResume(handle);
+        refreshCurrentState();
+        return result;
+    }
 
     /**
      * 跳转到指定播放位置。
@@ -264,7 +288,16 @@ public class ZMusicPlayer {
      *
      * @return 状态码
      */
-    public int getState() { return nativeGetState(handle); }
+    public int getState() { return currentState; }
+
+    private int refreshCurrentState() {
+        if (handle == 0) {
+            currentState = STATE_STOPPED;
+        } else {
+            currentState = nativeGetState(handle);
+        }
+        return currentState;
+    }
 
     /**
      * 获取当前播放位置（毫秒）。
@@ -344,17 +377,29 @@ public class ZMusicPlayer {
     /**
      * 跳到下一首曲目。
      */
-    public void playNext() { nativePlayNext(handle); }
+    public void playNext() {
+        currentState = STATE_LOADING;
+        nativePlayNext(handle);
+        refreshCurrentState();
+    }
 
     /**
      * 跳到上一首曲目。
      */
-    public void playPrevious() { nativePlayPrevious(handle); }
+    public void playPrevious() {
+        currentState = STATE_LOADING;
+        nativePlayPrevious(handle);
+        refreshCurrentState();
+    }
 
     /**
      * 跳到播放队列中指定索引的曲目并开始播放。
      */
-    public void playAtIndex(int index) { nativePlayAtIndex(handle, index); }
+    public void playAtIndex(int index) {
+        currentState = STATE_LOADING;
+        nativePlayAtIndex(handle, index);
+        refreshCurrentState();
+    }
 
     /**
      * 获取播放队列中的曲目数量。
@@ -449,12 +494,13 @@ public class ZMusicPlayer {
                 EventListener currentListener = listener;
                 if (event != EVENT_NONE && currentListener != null) {
                     if (event == EVENT_STATE_CHANGED) {
-                        currentListener.onStateChanged(nativeGetState(handle));
+                        currentListener.onStateChanged(refreshCurrentState());
                     } else if (event == EVENT_TRACK_ENDED) {
                         currentListener.onTrackEnded();
                     } else if (event == EVENT_PROGRESS_UPDATE) {
                         currentListener.onProgress(nativeGetPosition(handle), nativeGetDuration(handle));
                     } else if (event == EVENT_ERROR) {
+                        currentState = STATE_ERROR;
                         currentListener.onError("播放错误");
                         log.warn("ZMusic native player reported playback error");
                     } else if (event == EVENT_BUFFERING) {
