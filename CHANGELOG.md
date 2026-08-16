@@ -1,5 +1,17 @@
 # Changelog
 
+## v3.8.2
+
+- 将内置播放器升级至 `zmusic-player` 1.0.0-alpha.6。
+- 修复加载在线歌曲时播放状态查询阻塞 Minecraft 声音线程，导致游戏卡住数秒且无声的问题。
+- 提高首次播放和断流恢复时的缓冲水位，改善 FLAC 在网络波动下断断续续的问题。
+
+English:
+
+- Upgraded the bundled player to `zmusic-player` 1.0.0-alpha.6.
+- Fixed playback state queries blocking Minecraft's sound thread while loading online songs, which could freeze the game for several seconds and produce no audio.
+- Increased the initial and rebuffering thresholds to improve interrupted FLAC playback on unstable networks.
+
 ## v3.8.1
 
 - 将内置播放器升级至 `zmusic-player` 1.0.0-alpha.5。

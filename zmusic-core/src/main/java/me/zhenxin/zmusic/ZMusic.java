@@ -23,7 +23,7 @@ public class ZMusic {
     @Setter
     private static SoundManager soundManager;
     @Getter
-    private static String version = "3.8.1";
+    private static String version = "3.8.2";
 
     public static void onEnable() {
         if (player != null) {
