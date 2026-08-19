@@ -67,6 +67,7 @@ public class ZMusicPlayer {
     private native int nativeGetState(long handle);
     private native long nativeGetPosition(long handle);
     private native long nativeGetDuration(long handle);
+    private native String nativeGetLastError(long handle);
     private native float nativeGetVolume(long handle);
     private native int nativeSetVolume(long handle, float volume);
 
@@ -212,7 +213,8 @@ public class ZMusicPlayer {
                     int playResult = nativePlay(handle, url);
                     int stateAfterPlay = refreshCurrentState();
                     if (playResult != 0) {
-                        log.warn("ZMusic nativePlay returned {} for {}, stateAfter={}", playResult, url, stateAfterPlay);
+                        log.warn("ZMusic nativePlay returned {} for {}, stateAfter={}, error={}",
+                                playResult, url, stateAfterPlay, nativeGetLastError(handle));
                     } else {
                         log.info("ZMusic nativePlay accepted {}, stateAfter={}", url, stateAfterPlay);
                     }
@@ -308,6 +310,13 @@ public class ZMusicPlayer {
      * 获取当前曲目的总时长（毫秒）。
      */
     public long getDuration() { return nativeGetDuration(handle); }
+
+    /**
+     * 获取最近一次播放错误名称。
+     *
+     * @return 原生错误名称，无错误时返回 null
+     */
+    public String getLastError() { return nativeGetLastError(handle); }
 
     /**
      * 获取当前音量（0.0 ~ 1.0）。
@@ -501,8 +510,9 @@ public class ZMusicPlayer {
                         currentListener.onProgress(nativeGetPosition(handle), nativeGetDuration(handle));
                     } else if (event == EVENT_ERROR) {
                         currentState = STATE_ERROR;
-                        currentListener.onError("播放错误");
-                        log.warn("ZMusic native player reported playback error");
+                        String error = nativeGetLastError(handle);
+                        currentListener.onError(error == null ? "Unknown" : error);
+                        log.warn("ZMusic native player reported playback error: {}", error);
                     } else if (event == EVENT_BUFFERING) {
                         currentListener.onBuffering(true);
                     }

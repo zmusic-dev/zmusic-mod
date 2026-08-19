@@ -21,7 +21,7 @@ ext {
     modDescription = "Powerful Music System"
     zmusicPlayerVersion = project.hasProperty('zmusicPlayerVersion')
             ? project.property('zmusicPlayerVersion').toString()
-            : (project.findProperty('zmusicPlayerVersion')?.toString() ?: '1.0.0-alpha.6')
+            : (project.findProperty('zmusicPlayerVersion')?.toString() ?: '1.0.0-alpha.7')
     nativePlatforms = [
         'x86_64-linux'   : [libName: 'libzmusic.so',    pattern: ~/zmusic-x86_64-linux-.*\.tar\.gz/],
         'aarch64-linux'  : [libName: 'libzmusic.so',    pattern: ~/zmusic-aarch64-linux-.*\.tar\.gz/],
@@ -130,7 +130,7 @@ subprojects {
     apply plugin: 'java-library'
 
     group = "me.zhenxin"
-    version = "3.8.2"
+    version = "3.8.3"
 
     dependencies {
         compileOnly("org.projectlombok:lombok:1.18.46")
