@@ -18,5 +18,61 @@ dependencies {
 }
 
 jar {
+    destinationDirectory = layout.buildDirectory.dir('devlibs')
     dependsOn(":zmusic-core:jar")
+}
+
+def productionJar = layout.buildDirectory.file("libs/${project.name}-${project.version}.jar")
+
+def reobfJar = renamer.classes('reobfJar', tasks.named('jar', Jar)) {
+    map.from(minecraft.dependency.toSrgFile)
+    archiveClassifier = ''
+    output.set(productionJar)
+}
+
+tasks.named('jar') {
+    finalizedBy(reobfJar)
+}
+
+def verifyProductionJarMappings = tasks.register('verifyProductionJarMappings') {
+    group = 'verification'
+    description = 'Verifies that the production jar uses Minecraft 1.12.2 SRG names.'
+    dependsOn(reobfJar)
+    inputs.file(productionJar)
+
+    doLast {
+        def zip = new java.util.zip.ZipFile(productionJar.get().asFile)
+        try {
+            def entry = zip.getEntry('me/zhenxin/zmusic/manager/SoundManagerImpl.class')
+            if (entry == null) {
+                throw new GradleException('SoundManagerImpl.class is missing from the production jar')
+            }
+
+            def classContent = new String(
+                    zip.getInputStream(entry).bytes,
+                    java.nio.charset.StandardCharsets.ISO_8859_1
+            )
+            def developmentNames = ['getMinecraft', 'gameSettings', 'getSoundLevel', 'getSoundHandler']
+            def remainingDevelopmentNames = developmentNames.findAll(classContent::contains)
+            if (!remainingDevelopmentNames.isEmpty()) {
+                throw new GradleException(
+                        "Production jar still contains development mappings: ${remainingDevelopmentNames.join(', ')}"
+                )
+            }
+
+            def runtimeNames = ['func_71410_x', 'field_71474_y', 'func_186711_a', 'func_147118_V']
+            def missingRuntimeNames = runtimeNames.findAll { !classContent.contains(it) }
+            if (!missingRuntimeNames.isEmpty()) {
+                throw new GradleException(
+                        "Production jar is missing runtime mappings: ${missingRuntimeNames.join(', ')}"
+                )
+            }
+        } finally {
+            zip.close()
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn(verifyProductionJarMappings)
 }
