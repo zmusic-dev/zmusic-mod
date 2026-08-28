@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,6 +35,16 @@ public class ZMusicPlayer {
 
     private static final String NATIVE_RESOURCE_ROOT = "META-INF/native";
     private static final Object NATIVE_LOAD_LOCK = new Object();
+    private static final long ELF_PT_LOAD = 1L;
+    private static final long ELF_PT_DYNAMIC = 2L;
+    private static final long ELF_DT_NEEDED = 1L;
+    private static final long ELF_DT_STRTAB = 5L;
+    private static final long ELF_DT_SONAME = 14L;
+    private static final long ELF_DT_NULL = 0L;
+    private static final String BROKEN_LINUX_LIBC_STRING = "libc.so";
+    private static final String FIXED_LINUX_LIBC_STRING = "libc.so.6";
+    private static final byte[] BROKEN_LINUX_LIBC = "libc.so".getBytes(StandardCharsets.US_ASCII);
+    private static final byte[] FIXED_LINUX_LIBC = "libc.so.6".getBytes(StandardCharsets.US_ASCII);
     private static volatile boolean nativeLibraryLoaded;
     private static volatile Path nativeDirectory;
 
@@ -553,7 +564,7 @@ public class ZMusicPlayer {
             if (is == null) {
                 throw new RuntimeException("Native library not found in classpath: " + resourcePath);
             }
-            byte[] libBytes = readAllBytes(is);
+            byte[] libBytes = normalizeNativeLibrary(readAllBytes(is), platform, libName);
             String hash = sha256(libBytes).substring(0, 16);
             Path libDir = getNativeDirectory();
             Files.createDirectories(libDir);
@@ -564,6 +575,193 @@ public class ZMusicPlayer {
         } catch (IOException | NoSuchAlgorithmException e) {
             throw new RuntimeException("Failed to extract native library", e);
         }
+    }
+
+    private static byte[] normalizeNativeLibrary(byte[] libBytes, String platform, String libName) {
+        if (!"x86_64-linux".equals(platform) || !"libzmusic.so".equals(libName)) {
+            return libBytes;
+        }
+        try {
+            return patchBrokenLinuxLibcDependency(libBytes);
+        } catch (RuntimeException e) {
+            log.warn("Failed to normalize bundled ZMusic Linux native library, using original binary", e);
+            return libBytes;
+        }
+    }
+
+    private static byte[] patchBrokenLinuxLibcDependency(byte[] libBytes) {
+        if (!isElf64LittleEndian(libBytes)) {
+            return libBytes;
+        }
+
+        int programHeaderOffset = safeLongToInt(readLongLE(libBytes, 32));
+        int programHeaderEntrySize = readUnsignedShortLE(libBytes, 54);
+        int programHeaderCount = readUnsignedShortLE(libBytes, 56);
+
+        long stringTableVirtualAddress = -1L;
+        long neededStringOffset = -1L;
+        long neededEntryValueOffset = -1L;
+        long sonameStringOffset = -1L;
+
+        for (int i = 0; i < programHeaderCount; i++) {
+            int headerOffset = programHeaderOffset + (i * programHeaderEntrySize);
+            if (headerOffset < 0 || headerOffset + 56 > libBytes.length) {
+                return libBytes;
+            }
+            if (readIntLE(libBytes, headerOffset) != ELF_PT_DYNAMIC) {
+                continue;
+            }
+
+            int dynamicOffset = safeLongToInt(readLongLE(libBytes, headerOffset + 8));
+            int dynamicSize = safeLongToInt(readLongLE(libBytes, headerOffset + 32));
+            for (int entryOffset = dynamicOffset; entryOffset + 16 <= dynamicOffset + dynamicSize; entryOffset += 16) {
+                long tag = readLongLE(libBytes, entryOffset);
+                long value = readLongLE(libBytes, entryOffset + 8);
+                if (tag == ELF_DT_NULL) {
+                    break;
+                }
+                if (tag == ELF_DT_STRTAB) {
+                    stringTableVirtualAddress = value;
+                } else if (tag == ELF_DT_NEEDED && neededEntryValueOffset < 0L) {
+                    neededEntryValueOffset = entryOffset + 8L;
+                    neededStringOffset = value;
+                } else if (tag == ELF_DT_SONAME && sonameStringOffset < 0L) {
+                    sonameStringOffset = value;
+                }
+            }
+            break;
+        }
+
+        if (stringTableVirtualAddress < 0L || neededStringOffset < 0L || neededEntryValueOffset < 0L || sonameStringOffset < 0L) {
+            return libBytes;
+        }
+
+        long stringTableFileOffset = findFileOffsetForVirtualAddress(
+                libBytes,
+                programHeaderOffset,
+                programHeaderEntrySize,
+                programHeaderCount,
+                stringTableVirtualAddress
+        );
+        if (stringTableFileOffset < 0L) {
+            return libBytes;
+        }
+
+        int neededFileOffset = safeLongToInt(stringTableFileOffset + neededStringOffset);
+        int sonameFileOffset = safeLongToInt(stringTableFileOffset + sonameStringOffset);
+        String neededLibrary = readCString(libBytes, neededFileOffset);
+        if (FIXED_LINUX_LIBC_STRING.equals(neededLibrary)) {
+            return libBytes;
+        }
+        if (!BROKEN_LINUX_LIBC_STRING.equals(neededLibrary)) {
+            return libBytes;
+        }
+
+        int sonameCapacity = readCStringStorageLength(libBytes, sonameFileOffset);
+        if (sonameCapacity < FIXED_LINUX_LIBC.length + 1) {
+            return libBytes;
+        }
+
+        byte[] patched = libBytes.clone();
+        System.arraycopy(FIXED_LINUX_LIBC, 0, patched, sonameFileOffset, FIXED_LINUX_LIBC.length);
+        patched[sonameFileOffset + FIXED_LINUX_LIBC.length] = 0;
+        for (int i = FIXED_LINUX_LIBC.length + 1; i < sonameCapacity; i++) {
+            patched[sonameFileOffset + i] = 0;
+        }
+        writeLongLE(patched, safeLongToInt(neededEntryValueOffset), sonameStringOffset);
+        log.info("Patched bundled ZMusic Linux native library dependency from libc.so to libc.so.6");
+        return patched;
+    }
+
+    private static boolean isElf64LittleEndian(byte[] bytes) {
+        return bytes.length > 6
+                && bytes[0] == 0x7f
+                && bytes[1] == 'E'
+                && bytes[2] == 'L'
+                && bytes[3] == 'F'
+                && bytes[4] == 2
+                && bytes[5] == 1;
+    }
+
+    private static long findFileOffsetForVirtualAddress(
+            byte[] bytes,
+            int programHeaderOffset,
+            int programHeaderEntrySize,
+            int programHeaderCount,
+            long virtualAddress
+    ) {
+        for (int i = 0; i < programHeaderCount; i++) {
+            int headerOffset = programHeaderOffset + (i * programHeaderEntrySize);
+            if (headerOffset < 0 || headerOffset + 56 > bytes.length) {
+                return -1L;
+            }
+            if (readIntLE(bytes, headerOffset) != ELF_PT_LOAD) {
+                continue;
+            }
+            long segmentFileOffset = readLongLE(bytes, headerOffset + 8);
+            long segmentVirtualAddress = readLongLE(bytes, headerOffset + 16);
+            long segmentFileSize = readLongLE(bytes, headerOffset + 32);
+            if (virtualAddress >= segmentVirtualAddress && virtualAddress < segmentVirtualAddress + segmentFileSize) {
+                return segmentFileOffset + (virtualAddress - segmentVirtualAddress);
+            }
+        }
+        return -1L;
+    }
+
+    private static String readCString(byte[] bytes, int offset) {
+        int end = offset;
+        while (end < bytes.length && bytes[end] != 0) {
+            end++;
+        }
+        return new String(bytes, offset, end - offset, StandardCharsets.US_ASCII);
+    }
+
+    private static int readCStringStorageLength(byte[] bytes, int offset) {
+        int end = offset;
+        while (end < bytes.length && bytes[end] != 0) {
+            end++;
+        }
+        return end < bytes.length ? (end - offset) + 1 : 0;
+    }
+
+    private static int readUnsignedShortLE(byte[] bytes, int offset) {
+        return (bytes[offset] & 0xff) | ((bytes[offset + 1] & 0xff) << 8);
+    }
+
+    private static int readIntLE(byte[] bytes, int offset) {
+        return (bytes[offset] & 0xff)
+                | ((bytes[offset + 1] & 0xff) << 8)
+                | ((bytes[offset + 2] & 0xff) << 16)
+                | ((bytes[offset + 3] & 0xff) << 24);
+    }
+
+    private static long readLongLE(byte[] bytes, int offset) {
+        return ((long) bytes[offset] & 0xff)
+                | (((long) bytes[offset + 1] & 0xff) << 8)
+                | (((long) bytes[offset + 2] & 0xff) << 16)
+                | (((long) bytes[offset + 3] & 0xff) << 24)
+                | (((long) bytes[offset + 4] & 0xff) << 32)
+                | (((long) bytes[offset + 5] & 0xff) << 40)
+                | (((long) bytes[offset + 6] & 0xff) << 48)
+                | (((long) bytes[offset + 7] & 0xff) << 56);
+    }
+
+    private static void writeLongLE(byte[] bytes, int offset, long value) {
+        bytes[offset] = (byte) value;
+        bytes[offset + 1] = (byte) (value >>> 8);
+        bytes[offset + 2] = (byte) (value >>> 16);
+        bytes[offset + 3] = (byte) (value >>> 24);
+        bytes[offset + 4] = (byte) (value >>> 32);
+        bytes[offset + 5] = (byte) (value >>> 40);
+        bytes[offset + 6] = (byte) (value >>> 48);
+        bytes[offset + 7] = (byte) (value >>> 56);
+    }
+
+    private static int safeLongToInt(long value) {
+        if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Value out of int range: " + value);
+        }
+        return (int) value;
     }
 
     private static void writeNativeLibraryIfAbsent(Path libDir, Path libFile, byte[] libBytes, String expectedHash)
